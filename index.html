@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal Utama Pantauan Insentif PAK Non ASN</title>
+  <title>Dasbor Portal Utama Insentif | Bimkris Jateng</title>
   
   <!-- Font & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -27,7 +27,7 @@
         <img src="img/kemenag-logo.png" alt="Logo Kemenag" class="w-14 h-14 object-contain bg-gray-100 rounded-full p-1 border border-gray-200" id="logo-instansi">
         <div>
           <h1 class="text-xs font-bold tracking-wider text-blue-600 uppercase mb-1">Bimas Kristen Kanwil Kemenag Prov. Jateng 2026</h1>
-          <h2 class="text-xl md:text-2xl font-bold text-gray-900 leading-tight">Dasbor Portal Utama</h2>
+          <h2 class="text-xl md:text-2xl font-bold text-gray-900 leading-tight">Dasbor Portal Utama Insentif</h2>
         </div>
       </div>
 
@@ -47,9 +47,12 @@
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 gap-3">
         <div>
           <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-            <i class="fa-solid fa-chart-pie text-blue-600"></i> Bagian 1: Data Penerima
+            <i class="fa-solid fa-chart-pie text-blue-600"></i>Daftar Penerima
           </h3>
-          <p class="text-sm text-gray-500 mt-1">Lembar data rekapitulasi terhubung langsung dengan sistem (Live).</p>
+          <p class="text-sm text-gray-500 mt-1">
+            Lembar data rekapitulasi terhubung langsung secara <i>real-time</i><br>
+            Terdapat 2 sheet: Jan-Des26 dan Jul-Des26
+          </p>
         </div>
         <a href="https://docs.google.com/spreadsheets/d/1PE8hHd7jKz8h6WHdfpdzFmkDwcHwuOO6lJZ-2olP_9E/edit?gid=0#gid=0" target="_blank" class="btn-outline">
           Buka Tab Penuh <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i>
@@ -66,25 +69,43 @@
       </div>
     </section>
 
-    <!-- BAGIAN 2: TOMBOL NAVIGASI -->
-    <section class="card-modern bg-white p-8 rounded-xl border border-gray-200 text-center fade-in-up delay-2">
+    <!-- BAGIAN 2: TOMBOL NAVIGASI UPLOAD -->
+    <section class="card-modern bg-white p-8 rounded-xl border border-gray-200 text-center fade-in-up delay-2 mb-8">
       <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 mb-4">
         <i class="fa-solid fa-rocket text-xl"></i>
       </div>
-      <h3 class="text-xl font-bold text-gray-800 mb-2">Akses Pantauan Sistem</h3>
-      <p class="text-sm text-gray-500 mb-8 max-w-lg mx-auto">Pilih menu pantauan di bawah ini untuk melihat status ajuan dan laporan berkas berjalan secara real-time.</p>
+      <h3 class="text-xl font-bold text-gray-800 mb-2">Upload Berkas Periode Januari - Juni 2026</h3>
+      <p class="text-sm text-gray-500 mb-8 max-w-lg mx-auto">Pilih menu di bawah ini untuk upload Berkas <i><real-time</i>.</p>
       
       <div class="flex flex-col sm:flex-row justify-center gap-4">
-        <a href="https://script.google.com/macros/s/AKfycbwf3TEQ5MXPI-UlTEG2sHkOMIqGM-yJd8gP1aksn4QUDlH9gfmefQFGVYpOKedua44/exec?view=publik" target="_blank" class="btn-primary" onclick="showToast('Membuka Pantauan Berkas Ajuan...')">
-          <i class="fa-solid fa-folder-open mr-2"></i> Pantauan Berkas Ajuan
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdxJNOyeah3yMU0wXV9Hhb5X5KGJkQ4uNqMJfxSt5zn7Q4QHQ/viewform" target="_blank" class="btn-primary" onclick="showToast('Membuka Pantauan Berkas Ajuan...')">
+          <i class="fa-solid fa-folder-open mr-2"></i> Upload Berkas Ajuan
         </a>
 
-        <a href="https://script.google.com/macros/s/AKfycby_WQdIjABgYr5ckEhSBXxHs_7ydXJB9kEgbmZ6OnlUSPVZWSakfpEtlo2CRTdsdjOt/exec?view=publik" target="_blank" class="btn-secondary" onclick="showToast('Membuka Berkas Bulan Berjalan...')">
-          <i class="fa-solid fa-calendar-check mr-2"></i> Pantauan Bulan Berjalan
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSfXcEB1EOV1b8n8w8H-tpRYZjsBjGT48hycdQP3Lu5CPwb-5A/viewform" target="_blank" class="btn-secondary" onclick="showToast('Membuka Berkas Bulan Berjalan...')">
+          <i class="fa-solid fa-calendar-check mr-2"></i> Upload Berkas Bulan Berjalan
         </a>
       </div>
     </section>
 
+    <!-- BAGIAN 3: TOMBOL NAVIGASI PANTAU-->
+    <section class="card-modern bg-white p-8 rounded-xl border border-gray-200 text-center fade-in-up delay-3 mb-8">
+      <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 mb-4">
+        <i class="fa-solid fa-rocket text-xl"></i>
+      </div>
+      <h3 class="text-xl font-bold text-gray-800 mb-2">Akses Pantauan Berkas Januari-Juni 2026</h3>
+      <p class="text-sm text-gray-500 mb-8 max-w-lg mx-auto">Pilih menu di bawah ini untuk melihat status berkas ajuan dan berjalan secara <i><real-time</i>.</p>
+      
+      <div class="flex flex-col sm:flex-row justify-center gap-4">
+        <a href="https://script.google.com/macros/s/AKfycbwf3TEQ5MXPI-UlTEG2sHkOMIqGM-yJd8gP1aksn4QUDlH9gfmefQFGVYpOKedua44/exec?view=publik" target="_blank" class="btn-primary" onclick="showToast('Membuka Pantauan Berkas Ajuan...')">
+          <i class="fa-solid fa-folder-open mr-2"></i> Pantau Berkas Berkas Ajuan
+        </a>
+
+        <a href="https://script.google.com/macros/s/AKfycby_WQdIjABgYr5ckEhSBXxHs_7ydXJB9kEgbmZ6OnlUSPVZWSakfpEtlo2CRTdsdjOt/exec?view=publik" target="_blank" class="btn-secondary" onclick="showToast('Membuka Berkas Bulan Berjalan...')">
+          <i class="fa-solid fa-calendar-check mr-2"></i> Pantau Berkas Bulan Berjalan
+        </a>
+      </div>
+    </section>
   </main>
 
   <!-- FOOTER -->
