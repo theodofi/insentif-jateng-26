@@ -23,7 +23,6 @@
       
       <!-- TEMPAT LOGO -->
       <div class="flex items-center gap-4">
-        <!-- Ganti src di bawah ini dengan nama file logo Anda (misal: logo.png) -->
         <img src="img/kemenag-logo.png" alt="Logo Kemenag" class="w-14 h-14 object-contain bg-gray-100 rounded-full p-1 border border-gray-200" id="logo-instansi">
         <div>
           <h1 class="text-xs font-bold tracking-wider text-blue-600 uppercase mb-1">Bimas Kristen Kanwil Kemenag Prov. Jateng 2026</h1>
@@ -59,8 +58,8 @@
         </a>
       </div>
       
-      <!-- WADAH IFRAME (Telah Diperbaiki) -->
-      <div class="w-full h-[550px] border border-gray-200 rounded-lg overflow-hidden bg-gray-100" style="height: 700px">
+      <!-- WADAH IFRAME -->
+      <div class="w-full border border-gray-200 rounded-lg overflow-hidden bg-gray-100" style="height: 700px">
         <iframe 
           src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRW7ojDHXA4NtIzccgbyaSdrORgUN0OxyjRHN06ihUrg55vKgQ91Foy_2dpVKs8NAqMsIB0UXLoMtW2/pubhtml?widget=true&amp;headers=false" 
           class="w-full h-full border-0"
@@ -69,43 +68,64 @@
       </div>
     </section>
 
-    <!-- BAGIAN 2: TOMBOL NAVIGASI UPLOAD -->
-    <section class="card-modern bg-white p-8 rounded-xl border border-gray-200 text-center fade-in-up delay-2 mb-8">
-      <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 mb-4">
-        <i class="fa-solid fa-rocket text-xl"></i>
+    <!-- BAGIAN 2: PUSAT UPLOAD & PANTAUAN BERKAS (JANUARI - JUNI 2026) -->
+    <section class="card-modern bg-white p-6 md:p-8 rounded-xl border border-gray-200 fade-in-up delay-2 mb-8">
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 mb-3">
+          <i class="fa-solid fa-folder-tree text-xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800">Layanan Upload & Pantauan Berkas (Januari - Juni 2026)</h3>
+        <p class="text-sm text-gray-500 mt-1 max-w-xl mx-auto">
+          Pilih kategori berkas di bawah ini untuk mengunggah dokumen baru atau memantau status berkas secara <i>real-time</i>.
+        </p>
       </div>
-      <h3 class="text-xl font-bold text-gray-800 mb-2">Upload Berkas Periode Januari - Juni 2026</h3>
-      <p class="text-sm text-gray-500 mb-8 max-w-lg mx-auto">Pilih menu di bawah ini untuk upload Berkas <i><real-time</i>.</p>
-      
-      <div class="flex flex-col sm:flex-row justify-center gap-4">
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdxJNOyeah3yMU0wXV9Hhb5X5KGJkQ4uNqMJfxSt5zn7Q4QHQ/viewform" target="_blank" class="btn-primary" onclick="showToast('Membuka Pantauan Berkas Ajuan...')">
-          <i class="fa-solid fa-folder-open mr-2"></i> Upload Berkas Ajuan
-        </a>
 
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSfXcEB1EOV1b8n8w8H-tpRYZjsBjGT48hycdQP3Lu5CPwb-5A/viewform" target="_blank" class="btn-secondary" onclick="showToast('Membuka Berkas Bulan Berjalan...')">
-          <i class="fa-solid fa-calendar-check mr-2"></i> Upload Berkas Bulan Berjalan
-        </a>
+      <!-- GRID DUA KELOMPOK BERKAS -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Kelompok 1: Berkas Pengajuan -->
+        <div class="bg-slate-50 p-6 rounded-xl border border-gray-200 text-center flex flex-col justify-between hover:border-blue-300 transition-colors">
+          <div>
+            <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-600 mb-3">
+              <i class="fa-solid fa-file-arrow-up text-lg"></i>
+            </div>
+            <h4 class="text-lg font-bold text-gray-800 mb-1">Berkas Pengajuan</h4>
+            <p class="text-xs text-gray-500 mb-6">Kelola dan pantau berkas ajuan insentif periode Januari - Juni 2026.</p>
+          </div>
+          
+          <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSdxJNOyeah3yMU0wXV9Hhb5X5KGJkQ4uNqMJfxSt5zn7Q4QHQ/viewform" target="_blank" class="btn-primary text-sm flex-1" onclick="showToast('Membuka Form Upload Berkas Ajuan...')">
+              <i class="fa-solid fa-upload mr-2"></i> Upload
+            </a>
+            <a href="https://script.google.com/macros/s/AKfycbwf3TEQ5MXPI-UlTEG2sHkOMIqGM-yJd8gP1aksn4QUDlH9gfmefQFGVYpOKedua44/exec?view=publik" target="_blank" class="btn-outline border-blue-300 text-blue-700 hover:bg-blue-50 text-sm flex-1 flex items-center justify-center" onclick="showToast('Membuka Pantauan Berkas Ajuan...')">
+              <i class="fa-solid fa-magnifying-glass mr-2"></i> Pantau Berkas
+            </a>
+          </div>
+        </div>
+
+        <!-- Kelompok 2: Berkas Bulan Berjalan -->
+        <div class="bg-slate-50 p-6 rounded-xl border border-gray-200 text-center flex flex-col justify-between hover:border-emerald-300 transition-colors">
+          <div>
+            <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 mb-3">
+              <i class="fa-solid fa-calendar-check text-lg"></i>
+            </div>
+            <h4 class="text-lg font-bold text-gray-800 mb-1">Berkas Bulan Berjalan</h4>
+            <p class="text-xs text-gray-500 mb-6">Kelola dan pantau berkas laporan bulanan periode Januari - Juni 2026.</p>
+          </div>
+          
+          <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSfXcEB1EOV1b8n8w8H-tpRYZjsBjGT48hycdQP3Lu5CPwb-5A/viewform" target="_blank" class="btn-secondary text-sm flex-1" onclick="showToast('Membuka Form Upload Bulan Berjalan...')">
+              <i class="fa-solid fa-upload mr-2"></i> Upload
+            </a>
+            <a href="https://script.google.com/macros/s/AKfycby_WQdIjABgYr5ckEhSBXxHs_7ydXJB9kEgbmZ6OnlUSPVZWSakfpEtlo2CRTdsdjOt/exec?view=publik" target="_blank" class="btn-outline border-emerald-300 text-emerald-700 hover:bg-emerald-50 text-sm flex-1 flex items-center justify-center" onclick="showToast('Membuka Pantauan Bulan Berjalan...')">
+              <i class="fa-solid fa-magnifying-glass mr-2"></i> Pantau Berkas
+            </a>
+          </div>
+        </div>
+
       </div>
     </section>
 
-    <!-- BAGIAN 3: TOMBOL NAVIGASI PANTAU-->
-    <section class="card-modern bg-white p-8 rounded-xl border border-gray-200 text-center fade-in-up delay-3 mb-8">
-      <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 mb-4">
-        <i class="fa-solid fa-rocket text-xl"></i>
-      </div>
-      <h3 class="text-xl font-bold text-gray-800 mb-2">Akses Pantauan Berkas Januari-Juni 2026</h3>
-      <p class="text-sm text-gray-500 mb-8 max-w-lg mx-auto">Pilih menu di bawah ini untuk melihat status berkas ajuan dan berjalan secara <i><real-time</i>.</p>
-      
-      <div class="flex flex-col sm:flex-row justify-center gap-4">
-        <a href="https://script.google.com/macros/s/AKfycbwf3TEQ5MXPI-UlTEG2sHkOMIqGM-yJd8gP1aksn4QUDlH9gfmefQFGVYpOKedua44/exec?view=publik" target="_blank" class="btn-primary" onclick="showToast('Membuka Pantauan Berkas Ajuan...')">
-          <i class="fa-solid fa-folder-open mr-2"></i> Pantau Berkas Berkas Ajuan
-        </a>
-
-        <a href="https://script.google.com/macros/s/AKfycby_WQdIjABgYr5ckEhSBXxHs_7ydXJB9kEgbmZ6OnlUSPVZWSakfpEtlo2CRTdsdjOt/exec?view=publik" target="_blank" class="btn-secondary" onclick="showToast('Membuka Berkas Bulan Berjalan...')">
-          <i class="fa-solid fa-calendar-check mr-2"></i> Pantau Berkas Bulan Berjalan
-        </a>
-      </div>
-    </section>
   </main>
 
   <!-- FOOTER -->
