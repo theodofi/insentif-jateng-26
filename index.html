@@ -40,43 +40,38 @@
 
   <!-- KONTEN UTAMA -->
   <main class="max-w-6xl w-full mx-auto p-4 md:p-6 my-4 flex-grow space-y-8">
-
-    <!-- BAGIAN 1: DATA PENERIMA -->
-    <section class="card-modern bg-white p-6 rounded-xl border border-gray-200 fade-in-up delay-1">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 gap-3">
-        <div>
-          <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-            <i class="fa-solid fa-chart-pie text-blue-600"></i>Daftar Penerima
-          </h3>
-          <p class="text-sm text-gray-500 mt-1">
-            Lembar data rekapitulasi terhubung langsung secara <i>real-time</i><br>
-            Terdapat 2 sheet: Jan-Des26 dan Jul-Des26
-          </p>
+    <section class="card-modern bg-white p-6 md:p-8 rounded-xl border border-gray-200 fade-in-up delay-1 mb-8">
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 mb-3">
+          <i class="fa-solid fa-house text-blue-600"></i>
         </div>
-        <a href="https://docs.google.com/spreadsheets/d/1dYEKUGur51SGQLqzUkJigaNfMCC_rdfUsd3BsapmM8k/edit?usp=sharing" target="_blank" class="btn-outline">
-          Buka Tab Penuh <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i>
-        </a>
+        <h3 class="text-xl font-bold text-gray-800">Menu Umum</h3>
+        <p class="text-sm text-gray-500 mt-1 max-w-xl mx-auto">
+          Menu untuk akses Format Usulan, Dasar Regulasi, dan Daftar Penerima Insentif.
+        </p>
       </div>
-      
-      <!-- WADAH IFRAME -->
-      <div class="w-full border border-gray-200 rounded-lg overflow-hidden bg-gray-100" style="height: 700px">
-        <iframe 
-          src="https://docs.google.com/spreadsheets/d/e/2PACX-1vT0jH30mPYTce8CQKanCWVtc9MXsoeRuUF90RK1UtLBwuJfzwSDY_f015_-pvri4XwWi_4XN6IktNWo/pubhtml?widget=true&amp;headers=false" 
-          class="w-full h-full border-0"
-          allowfullscreen>
-        </iframe>
-      </div>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <a href="#" target="_blank" class="inline-flex items-center justify-center border align-middle select-none font-sans font-medium text-center transition-all duration-300 ease-in disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed data-[shape=pill]:rounded-full data-[width=full]:w-full focus:shadow-none text-sm rounded-md py-2 px-4 shadow-sm hover:shadow-md bg-slate-800 border-slate-800 text-slate-50 hover:bg-slate-700 hover:border-slate-700 flex-1" onclick="showToast('Membuka Form Upload Berkas Ajuan...')">
+              <i class="fa-solid fa-book mr-2"></i> Regulasi
+            </a>
+            <a href="#" target="_blank" class="inline-flex items-center justify-center border align-middle select-none font-sans font-medium text-center transition-all duration-300 ease-in disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed data-[shape=pill]:rounded-full data-[width=full]:w-full focus:shadow-none text-sm rounded-md py-2 px-4 shadow-sm hover:shadow-md bg-slate-800 border-slate-800 text-slate-50 hover:bg-slate-700 hover:border-slate-700 flex-1" onclick="showToast('Membuka Pantauan Berkas Ajuan...')">
+              <i class="fa-solid fa-file mr-2"></i> Format
+            </a>
+            <a href="#" target="_blank" class="inline-flex items-center justify-center border align-middle select-none font-sans font-medium text-center transition-all duration-300 ease-in disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed data-[shape=pill]:rounded-full data-[width=full]:w-full focus:shadow-none text-sm rounded-md py-2 px-4 shadow-sm hover:shadow-md bg-slate-800 border-slate-800 text-slate-50 hover:bg-slate-700 hover:border-slate-700 flex-1" onclick="showToast('Membuka Pantauan Berkas Ajuan...')">
+              <i class="fa-solid fa-user mr-2"></i> Daftar Penerima
+            </a>
+          </div>
     </section>
 
     <!-- BAGIAN 2: PUSAT UPLOAD & PANTAUAN BERKAS (JANUARI - JUNI 2026) -->
     <section class="card-modern bg-white p-6 md:p-8 rounded-xl border border-gray-200 fade-in-up delay-2 mb-8">
       <div class="text-center mb-8">
         <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 mb-3">
-          <i class="fa-solid fa-folder-tree text-xl"></i>
+          <i class="fa-solid fa-folder text-xl"></i>
         </div>
-        <h3 class="text-xl font-bold text-gray-800">Layanan Upload & Pantauan Berkas (Januari - Juni 2026)</h3>
+        <h3 class="text-xl font-bold text-gray-800">Layanan Pemberkasan <br>Januari - Juni 2026</h3>
         <p class="text-sm text-gray-500 mt-1 max-w-xl mx-auto">
-          Pilih kategori berkas di bawah ini untuk mengunggah dokumen baru atau memantau status berkas secara <i>real-time</i>.
+          Menu khusus untuk Pemberkasan <i>Softfile</i> Periode Januari - Juni 2026
         </p>
       </div>
 
@@ -89,8 +84,10 @@
             <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-600 mb-3">
               <i class="fa-solid fa-file-arrow-up text-lg"></i>
             </div>
-            <h4 class="text-lg font-bold text-gray-800 mb-1">Berkas Pengajuan</h4>
-            <p class="text-xs text-gray-500 mb-6">Kelola dan pantau berkas ajuan insentif periode Januari - Juni 2026.</p>
+            <h4 class="text-lg font-bold text-gray-800 mb-1">Berkas Ajuan</h4>
+            <p class="text-xs text-gray-500 mb-6">
+              Kelola dan pantau berkas ajuan periode Januari - Juni 2026
+            </p>
           </div>
           
           <div class="flex flex-col sm:flex-row gap-3 justify-center">
@@ -110,7 +107,9 @@
               <i class="fa-solid fa-calendar-check text-lg"></i>
             </div>
             <h4 class="text-lg font-bold text-gray-800 mb-1">Berkas Bulan Berjalan</h4>
-            <p class="text-xs text-gray-500 mb-6">Kelola dan pantau berkas laporan bulanan periode Januari - Juni 2026.</p>
+            <p 
+              class="text-xs text-gray-500 mb-6">Kelola dan pantau berkas bulan berjalan periode Januari - Juni 2026
+            </p>
           </div>
           
           <div class="flex flex-col sm:flex-row gap-3 justify-center">
@@ -126,6 +125,62 @@
       </div>
     </section>
 
+     <!-- BAGIAN 3: JULI DESEMBER 2026 -->
+    <section class="card-modern bg-white p-6 md:p-8 rounded-xl border border-gray-200 fade-in-up delay-2 mb-8">
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 mb-3">
+          <i class="fa-solid fa-folder text-xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800">Layanan Pemberkasan <br> Juli - Desember 2026</h3>
+        <p class="text-sm text-gray-500 mt-1 max-w-xl mx-auto">
+          Menu khusus untuk Pemberkasan <i>Softfile</i> Periode Juli - Desember 2026
+        </p>
+      </div>
+
+      <!-- GRID DUA KELOMPOK BERKAS -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Kelompok 1: Berkas Pengajuan -->
+        <div class="bg-slate-50 p-6 rounded-xl border border-gray-200 text-center flex flex-col justify-between hover:border-blue-300 transition-colors">
+          <div>
+            <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-600 mb-3">
+              <i class="fa-solid fa-file-arrow-up text-lg"></i>
+            </div>
+            <h4 class="text-lg font-bold text-gray-800 mb-1">Berkas Pengajuan</h4>
+            <p class="text-xs text-gray-500 mb-6">Kelola dan pantau berkas ajuan insentif periode Juli - Desember 2026.</p>
+          </div>
+          
+          <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <a href="#" target="_blank" class="btn-primary text-sm flex-1" onclick="showToast('Membuka Form Upload Berkas Ajuan...')">
+              <i class="fa-solid fa-upload mr-2"></i> Upload
+            </a>
+            <a href="#" target="_top" class="btn-outline border-blue-300 text-blue-700 hover:bg-blue-50 text-sm flex-1 flex items-center justify-center" onclick="showToast('Membuka Pantauan Berkas Ajuan...')">
+              <i class="fa-solid fa-magnifying-glass mr-2"></i> Pantau Berkas
+            </a>
+          </div>
+        </div>
+
+        <!-- Kelompok 2: Berkas Bulan Berjalan -->
+        <div class="bg-slate-50 p-6 rounded-xl border border-gray-200 text-center flex flex-col justify-between hover:border-emerald-300 transition-colors">
+          <div>
+            <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 mb-3">
+              <i class="fa-solid fa-calendar-check text-lg"></i>
+            </div>
+            <h4 class="text-lg font-bold text-gray-800 mb-1">Berkas Bulan Berjalan</h4>
+            <p class="text-xs text-gray-500 mb-6">Kelola dan pantau berkas bulan berjalan periode Juli - Desember 2026.</p>
+          </div>
+          
+          <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <a href="#" target="_blank" class="btn-secondary text-sm flex-1" onclick="showToast('Membuka Form Upload Bulan Berjalan...')">
+              <i class="fa-solid fa-upload mr-2"></i> Upload
+            </a>
+            <a href="#" target="_top" class="btn-outline border-emerald-300 text-emerald-700 hover:bg-emerald-50 text-sm flex-1 flex items-center justify-center" onclick="showToast('Membuka Pantauan Bulan Berjalan...')">
+              <i class="fa-solid fa-magnifying-glass mr-2"></i> Pantau Berkas
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- FOOTER -->
