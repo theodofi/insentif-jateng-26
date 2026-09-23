@@ -66,7 +66,7 @@
           </div>
     </section>
 
-    <!-- BAGIAN 2: PUSAT UPLOAD & PANTAUAN BERKAS -->
+    <!-- BAGIAN 2: GURU PAK DAN GURU SPKK -->
     <section class="card-modern bg-white p-6 md:p-8 rounded-xl border border-gray-200 fade-in-up delay-2 mb-8">
       <div class="text-center mb-10">
         <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 mb-3">
@@ -111,9 +111,9 @@
 
           <!-- Card Bulan Berjalan Sem 1 -->
           <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
-            <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-500 group-hover:bg-emerald-600 transition-colors"></div>
+            <div class="absolute top-0 left-0 w-1.5 h-full bg-green-500 group-hover:bg-green-600 transition-colors"></div>
             <div class="flex items-start gap-4 mb-5 pl-2">
-               <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg">
+               <div class="p-2.5 bg-green-50 text-green-600 rounded-lg">
                  <i class="fa-solid fa-calendar-check text-xl"></i>
                </div>
                <div>
@@ -168,9 +168,9 @@
 
           <!-- Card Bulan Berjalan Sem 2 -->
           <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
-            <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-400 group-hover:bg-emerald-500 transition-colors"></div>
+            <div class="absolute top-0 left-0 w-1.5 h-full bg-green-400 group-hover:bg-green-500 transition-colors"></div>
             <div class="flex items-start gap-4 mb-5 pl-2">
-               <div class="p-2.5 bg-gray-50 text-emerald-500 rounded-lg">
+               <div class="p-2.5 bg-gray-50 text-green-500 rounded-lg">
                  <i class="fa-solid fa-calendar-check text-xl"></i>
                </div>
                <div>
@@ -191,25 +191,63 @@
       </div>
     </section>
 
-     <!-- BAGIAN 3: JULI DESEMBER 2026 -->
-    <section class="card-modern bg-white p-6 md:p-8 rounded-xl border border-gray-200 fade-in-up delay-2 mb-8">
-      <div class="text-center mb-8">
+     <!-- BAGIAN 3: Tenaga Kependidikan-->
+      <section class="card-modern bg-white p-6 md:p-8 rounded-xl border border-gray-200 fade-in-up delay-2 mb-8">
+      <div class="text-center mb-10">
         <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 mb-3">
-          <i class="fa-solid fa-folder text-xl"></i>
+          <i class="fa-solid fa-folder-open text-xl"></i>
         </div>
-        <h3 class="text-2xl  font-bold text-gray-800">Layanan Pemberkasan Tenaga Kependidikan 2026</h3>
-        <p class="text-sm text-gray-500 mt-1 max-w-xl mx-auto">
-          <i>Masih dalam pengembangan</i>
+        <h3 class="text-2xl font-bold text-gray-800">Layanan Pemberkasan Tenaga Kependidikan SPKK 2026</h3>
+        <p class="text-sm text-gray-500 mt-2 max-w-2xl mx-auto">
+          Pastikan Anda mengunggah pada kategori yang tepat (Berkas Ajuan Awal atau Laporan Bulan Berjalan).
         </p>
       </div>
+      <div class="mb-10">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <!-- Card Ajuan Sem 1 -->
+          <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
+            <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-500 group-hover:bg-blue-600 transition-colors"></div>
+            <div class="flex items-start gap-4 mb-5 pl-2">
+               <div class="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
+                 <i class="fa-solid fa-file-arrow-up text-xl"></i>
+               </div>
+               <div>
+                 <h5 class="font-bold text-gray-800 text-lg">Berkas Ajuan</h5>
+                 <p class="text-xs text-gray-500 mt-0.5">Berkas Ajuan Tenaga Kependidikan SPKK Januari-Juni dan Juli-Desember</p>
+               </div>
+            </div>
+            <div class="flex gap-3 pl-2">
+              <a href="https://docs.google.com/forms/d/e/1FAIpQLSfxrBymaLpMdPsPrdy7yNxjoVDY0k43xRIb6A3-IQ2k87mPHA/viewform" target="_blank" class="btn-primary text-xs py-2 flex-1" onclick="showToast('Membuka Form Upload Ajuan Sem 1...')">
+                <i class="fa-solid fa-upload mr-1.5"></i> Unggah
+              </a>
+              <a href="#" target="_blank" class="btn-outline border-blue-200 text-blue-700 hover:bg-blue-50 text-xs py-2 flex-1 flex items-center justify-center" onclick="showToast('Membuka Pantauan Ajuan Sem 1...')">
+                <i class="fa-solid fa-magnifying-glass mr-1.5"></i> Pantau
+              </a>
+            </div>
+          </div>
 
-      <!-- GRID DUA KELOMPOK BERKAS -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        
-       
-
-       
+          <!-- Card Bulan Berjalan Sem 1 -->
+          <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
+            <div class="absolute top-0 left-0 w-1.5 h-full bg-green-500 group-hover:bg-green-600 transition-colors"></div>
+            <div class="flex items-start gap-4 mb-5 pl-2">
+               <div class="p-2.5 bg-green-50 text-green-600 rounded-lg">
+                 <i class="fa-solid fa-calendar-check text-xl"></i>
+               </div>
+               <div>
+                 <h5 class="font-bold text-gray-800 text-lg">Bulan Berjalan</h5>
+                 <p class="text-xs text-gray-500 mt-0.5">Berkas Bulan Berjalan Tenaga Kependidikan SPKK Januari-Juni dan Juli-Desember</p>
+               </div>
+            </div>
+            <div class="flex gap-3 pl-2">
+              <a href="https://docs.google.com/forms/d/e/1FAIpQLSfZL71tAamCB2F2s-Wdj1QWZpyMO-GvVSjvgTW34JJrPnTixQ/viewform" target="_blank" class="btn-secondary text-xs py-2 flex-1" onclick="showToast('Membuka Form Upload Berjalan Sem 1...')">
+                <i class="fa-solid fa-upload mr-1.5"></i> Unggah
+              </a>
+              <a href="#" target="_blank" class="btn-outline border-emerald-200 text-emerald-700 hover:bg-emerald-50 text-xs py-2 flex-1 flex items-center justify-center" onclick="showToast('Membuka Pantauan Berjalan Sem 1...')">
+                <i class="fa-solid fa-magnifying-glass mr-1.5"></i> Pantau
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   </main>
