@@ -68,6 +68,40 @@
           </div>
     </section>
 
+    <section class="card-modern bg-white p-6 md:p-8 rounded-xl border border-gray-200 fade-in-up delay-2 mb-8" aria-labelledby="teacher-search-heading">
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 mb-3">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+        <h3 id="teacher-search-heading" class="text-2xl font-bold text-gray-800">Cari Data Guru</h3>
+        <p class="text-sm text-gray-500 mt-1">Cari berdasarkan nama guru untuk melihat Satminkal dan Kab/Kota.</p>
+      </div>
+
+      <form id="teacher-search-form" class="teacher-search-form" role="search">
+        <label class="sr-only" for="teacher-search-input">Nama guru</label>
+        <input id="teacher-search-input" name="teacher-name" type="search" class="teacher-search-input" placeholder="Ketik nama guru..." autocomplete="off" required>
+        <button type="submit" class="btn-primary teacher-search-button">
+          <i class="fa-solid fa-magnifying-glass mr-2" aria-hidden="true"></i> Cari
+        </button>
+      </form>
+
+      <p id="teacher-search-status" class="teacher-search-status" role="status" aria-live="polite"></p>
+      <div id="teacher-search-results" class="teacher-results" hidden>
+        <div class="teacher-results-scroll">
+          <table class="teacher-results-table">
+            <thead>
+              <tr>
+                <th scope="col">Nama</th>
+                <th scope="col">Satminkal</th>
+                <th scope="col">Kab/Kota</th>
+              </tr>
+            </thead>
+            <tbody id="teacher-search-results-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <!-- BAGIAN 2: GURU PAK DAN GURU SPKK -->
     <section class="card-modern bg-white p-6 md:p-8 rounded-xl border border-gray-200 fade-in-up delay-2 mb-8">
       <div class="text-center mb-10">
