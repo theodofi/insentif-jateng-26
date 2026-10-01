@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchStatus = document.getElementById('teacher-search-status');
     const resultsContainer = document.getElementById('teacher-search-results');
     const resultsBody = document.getElementById('teacher-search-results-body');
-    const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/1dYEKUGur51SGQLqzUkJigaNfMCC_rdfUsd3BsapmM8k/export?format=csv&range=B7:E';
+    const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/1dYEKUGur51SGQLqzUkJigaNfMCC_rdfUsd3BsapmM8k/gviz/tq?tqx=out:csv&sheet=Data%20Gabungan&range=A2:C';
     let teacherRowsPromise;
 
     function parseCsv(csv) {
@@ -75,8 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
                 .then((csv) => parseCsv(csv).map((row) => ({
                     name: (row[0] || '').trim(),
-                    kabKota: (row[2] || '').trim(),
-                    satminkal: (row[3] || '').trim()
+                    satminkal: (row[1] || '').trim(),
+                    kabKota: (row[2] || '').trim()
                 })).filter((teacher) => teacher.name));
         }
         return teacherRowsPromise;
