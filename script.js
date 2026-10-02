@@ -31,8 +31,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchStatus = document.getElementById('teacher-search-status');
     const resultsContainer = document.getElementById('teacher-search-results');
     const resultsBody = document.getElementById('teacher-search-results-body');
+    const pagination = document.getElementById('teacher-search-pagination');
+    const previousPageButton = document.getElementById('teacher-search-previous');
+    const nextPageButton = document.getElementById('teacher-search-next');
+    const pageStatus = document.getElementById('teacher-search-page-status');
     const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/1dYEKUGur51SGQLqzUkJigaNfMCC_rdfUsd3BsapmM8k/gviz/tq?tqx=out:csv&sheet=Data%20Gabungan&range=A2:C';
+    const pageSize = 10;
     let teacherRowsPromise;
+    let currentTeachers = [];
+    let currentPage = 1;
 
     function updateKabKotaControl() {
         const hasSelection = Boolean(kabKotaSelect.value);
@@ -112,8 +119,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderTeacherResults(teachers) {
+        currentTeachers = teachers;
+        currentPage = 1;
+        renderTeacherPage();
+    }
+
+    function renderTeacherPage() {
         resultsBody.replaceChildren();
-        teachers.forEach((teacher) => {
+        const startIndex = (currentPage - 1) * pageSize;
+        const currentPageTeachers = currentTeachers.slice(startIndex, startIndex + pageSize);
+        currentPageTeachers.forEach((teacher) => {
             const row = document.createElement('tr');
             [teacher.name, teacher.satminkal, teacher.kabKota].forEach((text) => {
                 const cell = document.createElement('td');
@@ -122,8 +137,28 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             resultsBody.appendChild(row);
         });
-        resultsContainer.hidden = teachers.length === 0;
+        const pageCount = Math.ceil(currentTeachers.length / pageSize);
+        resultsContainer.hidden = currentTeachers.length === 0;
+        pagination.hidden = pageCount <= 1;
+        pageStatus.textContent = `Halaman ${currentPage} dari ${pageCount}`;
+        previousPageButton.disabled = currentPage === 1;
+        nextPageButton.disabled = currentPage >= pageCount;
     }
+
+    previousPageButton.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage -= 1;
+            renderTeacherPage();
+        }
+    });
+
+    nextPageButton.addEventListener('click', () => {
+        const pageCount = Math.ceil(currentTeachers.length / pageSize);
+        if (currentPage < pageCount) {
+            currentPage += 1;
+            renderTeacherPage();
+        }
+    });
 
     searchForm.addEventListener('submit', async (event) => {
         event.preventDefault();
