@@ -36,8 +36,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextPageButton = document.getElementById('teacher-search-next');
     const pageStatus = document.getElementById('teacher-search-page-status');
     const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/1dYEKUGur51SGQLqzUkJigaNfMCC_rdfUsd3BsapmM8k/gviz/tq?tqx=out:csv&sheet=Data%20Gabungan&range=A2:C';
+    const teacherRowsCacheKey = 'teacher-list-cache-v1';
+    const teacherRowsCacheDuration = 10 * 60 * 1000;
+    const retryCooldown = 30 * 1000;
     const pageSize = 5;
     let teacherRowsPromise;
+    let retryAfter = 0;
     let currentTeachers = [];
     let currentPage = 1;
 
@@ -102,18 +106,52 @@ document.addEventListener('DOMContentLoaded', () => {
         return rows;
     }
 
+    function readTeacherRowsCache() {
+        try {
+            const cachedData = JSON.parse(window.localStorage.getItem(teacherRowsCacheKey) || 'null');
+            const cacheAge = cachedData ? Date.now() - cachedData.savedAt : Infinity;
+            if (Array.isArray(cachedData?.rows) && cacheAge >= 0 && cacheAge < teacherRowsCacheDuration) {
+                return cachedData.rows;
+            }
+        } catch {
+            return null;
+        }
+        return null;
+    }
+
     function loadTeacherRows() {
         if (!teacherRowsPromise) {
-            teacherRowsPromise = fetch(spreadsheetUrl)
-                .then((response) => {
-                    if (!response.ok) throw new Error('Spreadsheet tidak dapat dimuat.');
-                    return response.text();
-                })
-                .then((csv) => parseCsv(csv).map((row) => ({
-                    name: (row[0] || '').trim(),
-                    satminkal: (row[1] || '').trim(),
-                    kabKota: (row[2] || '').trim()
-                })).filter((teacher) => teacher.name));
+            const cachedRows = readTeacherRowsCache();
+            if (cachedRows) {
+                teacherRowsPromise = Promise.resolve(cachedRows);
+            } else if (Date.now() < retryAfter) {
+                return Promise.reject(new Error('Spreadsheet retry cooldown is active.'));
+            } else {
+                teacherRowsPromise = fetch(spreadsheetUrl)
+                    .then((response) => {
+                        if (!response.ok) throw new Error('Spreadsheet tidak dapat dimuat.');
+                        return response.text();
+                    })
+                    .then((csv) => parseCsv(csv).map((row) => ({
+                        name: (row[0] || '').trim(),
+                        satminkal: (row[1] || '').trim(),
+                        kabKota: (row[2] || '').trim()
+                    })).filter((teacher) => teacher.name))
+                    .then((teachers) => {
+                        try {
+                            window.localStorage.setItem(teacherRowsCacheKey, JSON.stringify({
+                                savedAt: Date.now(),
+                                rows: teachers
+                            }));
+                        } catch {
+                        }
+                        return teachers;
+                    })
+                    .catch((error) => {
+                        retryAfter = Date.now() + retryCooldown;
+                        throw error;
+                    });
+            }
         }
         return teacherRowsPromise;
     }
