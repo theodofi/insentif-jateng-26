@@ -157,59 +157,6 @@ function consumeCaptcha_(token, answer) {
 }
 
 
-// =======================================================================
-// ENKRIPSI RESPON PENCARIAN
-// Kunci diturunkan dari token + jawaban CAPTCHA (sekali pakai), sehingga tidak
-// ada kunci tetap di kode situs. HMAC-SHA256 dipakai sebagai stream cipher
-// (mode counter) + tag autentikasi (encrypt-then-MAC), karena Apps Script tidak
-// punya AES. Catatan: ini hanya lapisan tambahan; perlindungan utama tetap
-// CAPTCHA, batas hasil, dan rate limit di atas.
-// =======================================================================
-function toUnsigned_(bytes) {
-  return bytes.map(function (b) { return b & 255; });
-}
-
-
-function toSigned_(bytes) {
-  return bytes.map(function (b) { return b > 127 ? b - 256 : b; });
-}
-
-
-function deriveKeys_(token, answer) {
-  const material = Utilities.computeDigest(
-    Utilities.DigestAlgorithm.SHA_256, token + ':' + answer, Utilities.Charset.UTF_8);
-  return {
-    enc: Utilities.computeHmacSha256Signature(Utilities.newBlob('enc').getBytes(), material),
-    mac: Utilities.computeHmacSha256Signature(Utilities.newBlob('mac').getBytes(), material)
-  };
-}
-
-
-function encryptPayload_(payload, token, answer) {
-  const keys = deriveKeys_(token, answer);
-  const plain = toUnsigned_(Utilities.newBlob(JSON.stringify(payload)).getBytes());
-  const nonce = toUnsigned_(Utilities.computeDigest(
-    Utilities.DigestAlgorithm.SHA_256, Utilities.getUuid() + Utilities.getUuid())).slice(0, 16);
-
-  const cipher = new Array(plain.length);
-  for (let offset = 0, counter = 0; offset < plain.length; offset += 32, counter++) {
-    const counterBytes = [(counter >>> 24) & 255, (counter >>> 16) & 255, (counter >>> 8) & 255, counter & 255];
-    const block = toUnsigned_(Utilities.computeHmacSha256Signature(
-      toSigned_(nonce.concat(counterBytes)), keys.enc));
-    for (let i = 0; i < 32 && offset + i < plain.length; i++) {
-      cipher[offset + i] = plain[offset + i] ^ block[i];
-    }
-  }
-
-  const tag = Utilities.computeHmacSha256Signature(toSigned_(nonce.concat(cipher)), keys.mac);
-  return {
-    n: Utilities.base64Encode(toSigned_(nonce)),
-    c: Utilities.base64Encode(toSigned_(cipher)),
-    t: Utilities.base64Encode(tag)
-  };
-}
-
-
 function normalizeText_(value) {
   return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
@@ -222,8 +169,7 @@ function searchTeachers_(params) {
   if ((!query && !kabKota) || query.length > SEARCH_MAX_QUERY_LENGTH || kabKota.length > 50) {
     return { ok: false, error: 'invalid_query' };
   }
-  const verifiedAnswer = consumeCaptcha_(params.token, params.answer);
-  if (verifiedAnswer === null) {
+  if (consumeCaptcha_(params.token, params.answer) === null) {
     bumpCounter_('fail');
     return { ok: false, error: 'captcha_failed' };
   }
@@ -253,10 +199,5 @@ function searchTeachers_(params) {
     }
   }
 
-  const encrypted = encryptPayload_(
-    { total: total, results: results, truncated: total > results.length },
-    params.token,
-    verifiedAnswer
-  );
-  return { ok: true, n: encrypted.n, c: encrypted.c, t: encrypted.t };
+  return { ok: true, total: total, results: results, truncated: total > results.length };
 }

@@ -77,57 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
     kabKotaSelect.addEventListener('change', updateKabKotaControl);
     updateKabKotaControl();
 
-    const textEncoder = new TextEncoder();
-
-    function base64ToBytes(value) {
-        const binary = window.atob(value);
-        return Uint8Array.from(binary, (character) => character.charCodeAt(0));
-    }
-
-    async function hmacSha256(keyBytes, messageBytes) {
-        const key = await window.crypto.subtle.importKey(
-            'raw', keyBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-        );
-        return new Uint8Array(await window.crypto.subtle.sign('HMAC', key, messageBytes));
-    }
-
-    function concatBytes(...parts) {
-        const result = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
-        let offset = 0;
-        parts.forEach((part) => {
-            result.set(part, offset);
-            offset += part.length;
-        });
-        return result;
-    }
-
-    // Mirrors encryptPayload_ in apps-script/Search.gs: the key comes from the one-time token and CAPTCHA answer.
-    async function decryptSearchResponse(data, token, answer) {
-        if (!window.crypto?.subtle) throw new Error('request_failed');
-        if (![data.n, data.c, data.t].every((part) => typeof part === 'string')) throw new Error('request_failed');
-
-        const material = new Uint8Array(await window.crypto.subtle.digest('SHA-256', textEncoder.encode(`${token}:${answer}`)));
-        const encKey = await hmacSha256(material, textEncoder.encode('enc'));
-        const macKey = await hmacSha256(material, textEncoder.encode('mac'));
-        const nonce = base64ToBytes(data.n);
-        const cipher = base64ToBytes(data.c);
-        const tag = base64ToBytes(data.t);
-
-        const expectedTag = await hmacSha256(macKey, concatBytes(nonce, cipher));
-        const tagMatches = tag.length === expectedTag.length && tag.every((byte, index) => byte === expectedTag[index]);
-        if (!tagMatches) throw new Error('request_failed');
-
-        const plain = new Uint8Array(cipher.length);
-        for (let offset = 0, counter = 0; offset < cipher.length; offset += 32, counter += 1) {
-            const counterBytes = new Uint8Array([(counter >>> 24) & 255, (counter >>> 16) & 255, (counter >>> 8) & 255, counter & 255]);
-            const block = await hmacSha256(encKey, concatBytes(nonce, counterBytes));
-            for (let index = 0; index < 32 && offset + index < cipher.length; index += 1) {
-                plain[offset + index] = cipher[offset + index] ^ block[index];
-            }
-        }
-        return JSON.parse(new TextDecoder().decode(plain));
-    }
-
     function requestSearchApi(params) {
         if (!searchApiUrl) return Promise.reject(new Error('not_configured'));
         const url = new URL(searchApiUrl);
@@ -287,15 +236,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             searchStatus.textContent = 'Mencari data guru...';
             resultsContainer.hidden = true;
-            const searchToken = captchaToken;
-            const searchResponse = await requestSearchApi({
+            const data = await requestSearchApi({
                 action: 'search',
                 q: searchTerm,
                 kab: kabKotaSelect.value,
-                token: searchToken,
+                token: captchaToken,
                 answer
             });
-            const data = await decryptSearchResponse(searchResponse, searchToken, answer);
             hideCaptcha();
             const results = Array.isArray(data.results) ? data.results.map((row) => ({
                 name: String(row.name || ''),
