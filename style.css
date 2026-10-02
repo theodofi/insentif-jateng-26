@@ -157,6 +157,14 @@ body {
 .teacher-search-captcha-actions {
     flex-shrink: 0;
 }
+.teacher-search-captcha-actions:empty {
+    display: none;
+}
+@media (min-width: 768px) {
+    .teacher-search-captcha {
+        width: fit-content;
+    }
+}
 .teacher-search-captcha-question {
     display: block;
     margin-bottom: 0.5rem;

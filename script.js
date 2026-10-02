@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const captchaQuestion = document.getElementById('teacher-search-captcha-question');
     const captchaImage = document.getElementById('teacher-search-captcha-image');
     const captchaAccessibleText = document.getElementById('teacher-search-captcha-accessible-text');
+    const captchaControls = document.getElementById('teacher-search-captcha-controls');
     const captchaActions = document.getElementById('teacher-search-captcha-actions');
     const captchaAnswerInput = document.getElementById('teacher-search-captcha-answer');
     const captchaRefreshButton = document.getElementById('teacher-search-captcha-refresh');
@@ -178,9 +179,17 @@ document.addEventListener('DOMContentLoaded', () => {
         captchaAnswerInput.value = '';
         captchaContainer.hidden = false;
         submitLabel.textContent = 'Cari';
-        captchaActions.appendChild(submitButton);
+        positionCaptchaSubmitButton();
         captchaAnswerInput.focus();
         return true;
+    }
+
+    function positionCaptchaSubmitButton() {
+        if (captchaContainer.hidden) return;
+        const destination = window.matchMedia('(max-width: 767px)').matches
+            ? captchaActions
+            : captchaControls;
+        destination.appendChild(submitButton);
     }
 
     function renderTeacherResults(teachers) {
@@ -226,6 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     captchaRefreshButton.addEventListener('click', createCaptchaChallenge);
+    window.addEventListener('resize', positionCaptchaSubmitButton);
 
     searchForm.addEventListener('submit', async (event) => {
         event.preventDefault();
