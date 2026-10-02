@@ -12,6 +12,9 @@ const SEARCH_SHEET_NAME = 'Data Gabungan';
 const SEARCH_FIRST_ROW = 2;
 const SEARCH_MAX_QUERY_LENGTH = 100;
 const SEARCH_MAX_RESULTS = 30;
+const SEARCH_ROWS_CACHE_KEY = 'teacher_search_rows_v1';
+const SEARCH_ROWS_CACHE_TTL_SECONDS = 30;
+const SEARCH_ROWS_CACHE_MAX_BYTES = 90000;
 const CAPTCHA_TTL_SECONDS = 120;
 const CAPTCHA_MIN_SOLVE_MS = 1000; // jawaban yang masuk lebih cepat dianggap bot
 // Pembatasan global (Apps Script anonim tidak punya identitas klien).
@@ -162,6 +165,45 @@ function normalizeText_(value) {
 }
 
 
+function getSearchRows_(sheet) {
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get(SEARCH_ROWS_CACHE_KEY);
+  if (cached !== null) {
+    try {
+      const rows = JSON.parse(cached);
+      if (Array.isArray(rows)) return rows;
+      Logger.log('Search row cache had an invalid format; reloading the spreadsheet.');
+    } catch (error) {
+      Logger.log('Search row cache could not be parsed; reloading the spreadsheet: ' + error);
+    }
+    cache.remove(SEARCH_ROWS_CACHE_KEY);
+  }
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < SEARCH_FIRST_ROW) return [];
+
+  const rows = sheet
+    .getRange(SEARCH_FIRST_ROW, 1, lastRow - SEARCH_FIRST_ROW + 1, 3)
+    .getValues()
+    .map(function (row) {
+      return [
+        String(row[0] || '').trim(),
+        String(row[1] || '').trim(),
+        String(row[2] || '').trim()
+      ];
+    });
+  const serialized = JSON.stringify(rows);
+  if (Utilities.newBlob(serialized).getBytes().length <= SEARCH_ROWS_CACHE_MAX_BYTES) {
+    try {
+      cache.put(SEARCH_ROWS_CACHE_KEY, serialized, SEARCH_ROWS_CACHE_TTL_SECONDS);
+    } catch (error) {
+      Logger.log('Could not cache search rows; continuing with the spreadsheet data: ' + error);
+    }
+  }
+  return rows;
+}
+
+
 function searchTeachers_(params) {
   const query = normalizeText_(params.q);
   const kabKota = normalizeText_(params.kab);
@@ -177,25 +219,22 @@ function searchTeachers_(params) {
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SEARCH_SHEET_NAME);
   if (!sheet) return { ok: false, error: 'server_error' };
 
-  const lastRow = sheet.getLastRow();
+  const rows = getSearchRows_(sheet);
   const results = [];
   let total = 0;
 
-  if (lastRow >= SEARCH_FIRST_ROW) {
-    const rows = sheet.getRange(SEARCH_FIRST_ROW, 1, lastRow - SEARCH_FIRST_ROW + 1, 3).getValues();
-    for (let i = 0; i < rows.length; i++) {
-      const name = String(rows[i][0] || '').trim();
-      if (!name || normalizeText_(name).indexOf(query) === -1) continue;
-      if (kabKota && normalizeText_(rows[i][2]) !== kabKota) continue;
+  for (let i = 0; i < rows.length; i++) {
+    const name = rows[i][0];
+    if (!name || normalizeText_(name).indexOf(query) === -1) continue;
+    if (kabKota && normalizeText_(rows[i][2]) !== kabKota) continue;
 
-      total++;
-      if (results.length < SEARCH_MAX_RESULTS) {
-        results.push({
-          name: name,
-          satminkal: String(rows[i][1] || '').trim(),
-          kabKota: String(rows[i][2] || '').trim()
-        });
-      }
+    total++;
+    if (results.length < SEARCH_MAX_RESULTS) {
+      results.push({
+        name: name,
+        satminkal: rows[i][1],
+        kabKota: rows[i][2]
+      });
     }
   }
 
