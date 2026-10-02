@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="no-referrer">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' https://lh3.googleusercontent.com data:; connect-src 'self' https://docs.google.com; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' https://lh3.googleusercontent.com data:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; upgrade-insecure-requests">
   <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1csgQfWYTIHnOzJ7U2ttT93TTv9DRn1zs">
   <link rel="shortcut icon" type="image/png" href="https://lh3.googleusercontent.com/d/1csgQfWYTIHnOzJ7U2ttT93TTv9DRn1zs">
   <title>Portal Utama Insentif | Bimkris Jateng</title>
@@ -81,7 +81,7 @@
 
       <form id="teacher-search-form" class="teacher-search-form" role="search">
         <label class="sr-only" for="teacher-search-input">Nama guru</label>
-        <input id="teacher-search-input" name="teacher-name" type="search" class="teacher-search-input" placeholder="Ketik nama guru..." autocomplete="off" maxlength="100">
+        <input id="teacher-search-input" name="teacher-name" type="search" class="teacher-search-input" placeholder="Ketik nama guru (min. 3 huruf)..." autocomplete="off" maxlength="100">
         <label class="sr-only" for="teacher-search-kab-kota">Kabupaten/Kota</label>
         <div class="teacher-search-location">
           <i class="fa-solid fa-city teacher-search-location-icon" aria-hidden="true"></i>
@@ -133,8 +133,8 @@
       <div id="teacher-search-captcha" class="teacher-search-captcha" hidden role="group" aria-labelledby="teacher-search-captcha-question">
         <div class="teacher-search-captcha-content">
           <p id="teacher-search-captcha-question" class="teacher-search-captcha-question">Hitung soal matematika pada gambar:</p>
-          <canvas id="teacher-search-captcha-image" class="teacher-search-captcha-image" width="280" height="80" role="img" aria-labelledby="teacher-search-captcha-accessible-text">Soal matematika akan ditampilkan sebagai gambar.</canvas>
-          <span id="teacher-search-captcha-accessible-text" class="sr-only"></span>
+          <img id="teacher-search-captcha-image" class="teacher-search-captcha-image" width="280" height="80" alt="Soal matematika verifikasi dalam bentuk gambar">
+
           <div id="teacher-search-captcha-controls" class="teacher-search-captcha-controls">
             <label for="teacher-search-captcha-answer" class="teacher-search-captcha-answer-label">Jawaban</label>
             <input id="teacher-search-captcha-answer" class="teacher-search-captcha-input" type="number" inputmode="numeric" min="0" max="18" step="1" autocomplete="off" aria-describedby="teacher-search-captcha-help">

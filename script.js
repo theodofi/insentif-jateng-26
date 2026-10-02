@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateTime, 1000);
     updateTime();
 
-    // Search the public teacher list from the linked spreadsheet.
+    // Search teacher data through the Apps Script web app (the spreadsheet itself stays private).
     const searchForm = document.getElementById('teacher-search-form');
     const searchInput = document.getElementById('teacher-search-input');
     const kabKotaSelect = document.getElementById('teacher-search-kab-kota');
@@ -36,23 +36,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextPageButton = document.getElementById('teacher-search-next');
     const pageStatus = document.getElementById('teacher-search-page-status');
     const captchaContainer = document.getElementById('teacher-search-captcha');
-    const captchaQuestion = document.getElementById('teacher-search-captcha-question');
     const captchaImage = document.getElementById('teacher-search-captcha-image');
-    const captchaAccessibleText = document.getElementById('teacher-search-captcha-accessible-text');
     const captchaControls = document.getElementById('teacher-search-captcha-controls');
     const captchaActions = document.getElementById('teacher-search-captcha-actions');
     const captchaAnswerInput = document.getElementById('teacher-search-captcha-answer');
     const captchaRefreshButton = document.getElementById('teacher-search-captcha-refresh');
-    const submitLabel = document.getElementById('teacher-search-submit-label');
     const submitButton = searchForm.querySelector('button[type="submit"]');
-    const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/1dYEKUGur51SGQLqzUkJigaNfMCC_rdfUsd3BsapmM8k/gviz/tq?tqx=out:csv&sheet=Data%20Gabungan&range=A2:C';
-    const retryCooldown = 30 * 1000;
+    // URL web app Apps Script (Deploy > Manage deployments), berakhiran /exec.
+    const searchApiUrl = '';
+    const minQueryLength = 3;
+    const maxQueryLength = 100;
     const pageSize = 5;
-    let teacherRowsPromise;
-    let retryAfter = 0;
     let currentTeachers = [];
     let currentPage = 1;
-    let captchaAnswer;
+    let captchaToken;
 
     function updateKabKotaControl() {
         const hasSelection = Boolean(kabKotaSelect.value);
@@ -81,109 +78,67 @@ document.addEventListener('DOMContentLoaded', () => {
     kabKotaSelect.addEventListener('change', updateKabKotaControl);
     updateKabKotaControl();
 
-    function parseCsv(csv) {
-        const rows = [];
-        let row = [];
-        let value = '';
-        let insideQuotes = false;
-
-        for (let index = 0; index < csv.length; index += 1) {
-            const character = csv[index];
-            if (character === '"') {
-                if (insideQuotes && csv[index + 1] === '"') {
-                    value += '"';
-                    index += 1;
-                } else {
-                    insideQuotes = !insideQuotes;
-                }
-            } else if (character === ',' && !insideQuotes) {
-                row.push(value);
-                value = '';
-            } else if ((character === '\n' || character === '\r') && !insideQuotes) {
-                if (character === '\r' && csv[index + 1] === '\n') index += 1;
-                row.push(value);
-                if (row.some((cell) => cell.trim())) rows.push(row);
-                row = [];
-                value = '';
-            } else {
-                value += character;
-            }
-        }
-
-        row.push(value);
-        if (row.some((cell) => cell.trim())) rows.push(row);
-        return rows;
+    function requestSearchApi(params) {
+        if (!searchApiUrl) return Promise.reject(new Error('not_configured'));
+        const url = new URL(searchApiUrl);
+        Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+        return fetch(url, {
+            cache: 'no-store',
+            credentials: 'omit',
+            referrerPolicy: 'no-referrer',
+            signal: controller.signal
+        })
+            .then((response) => {
+                if (!response.ok) throw new Error('request_failed');
+                return response.json();
+            })
+            .then((data) => {
+                if (!data || data.ok !== true) throw new Error(data?.error || 'request_failed');
+                return data;
+            })
+            .finally(() => window.clearTimeout(timeoutId));
     }
 
-    function loadTeacherRows() {
-        if (!teacherRowsPromise) {
-            if (Date.now() < retryAfter) {
-                return Promise.reject(new Error('Spreadsheet retry cooldown is active.'));
-            } else {
-                const controller = new AbortController();
-                const timeoutId = window.setTimeout(() => controller.abort(), 15000);
-                teacherRowsPromise = fetch(spreadsheetUrl, { cache: 'no-store', signal: controller.signal })
-                    .then((response) => {
-                        if (!response.ok) throw new Error('Spreadsheet tidak dapat dimuat.');
-                        return response.text();
-                    })
-                    .then((csv) => parseCsv(csv).map((row) => ({
-                        name: (row[0] || '').trim(),
-                        satminkal: (row[1] || '').trim(),
-                        kabKota: (row[2] || '').trim()
-                    })).filter((teacher) => teacher.name))
-                    .finally(() => window.clearTimeout(timeoutId))
-                    .catch((error) => {
-                        retryAfter = Date.now() + retryCooldown;
-                        throw error;
-                    });
-            }
+    async function loadCaptchaChallenge() {
+        const data = await requestSearchApi({ action: 'captcha' });
+        if (typeof data.token !== 'string' || !String(data.image).startsWith('data:image/svg+xml;base64,')) {
+            throw new Error('request_failed');
         }
-        return teacherRowsPromise;
-    }
-
-    function createCaptchaChallenge() {
-        const firstNumber = Math.floor(Math.random() * 9) + 1;
-        const secondNumber = Math.floor(Math.random() * 9) + 1;
-        const context = captchaImage.getContext('2d');
-        if (!context) {
-            captchaContainer.hidden = true;
-            captchaAnswer = undefined;
-            submitLabel.textContent = 'Cari';
-            searchStatus.textContent = 'Peramban tidak mendukung verifikasi CAPTCHA.';
-            searchStatus.classList.add('is-error');
-            return false;
-        }
-
-        captchaAnswer = firstNumber + secondNumber;
-        const expression = `${firstNumber} + ${secondNumber} = ?`;
-        context.clearRect(0, 0, captchaImage.width, captchaImage.height);
-        context.fillStyle = '#eff6ff';
-        context.fillRect(0, 0, captchaImage.width, captchaImage.height);
-        for (let index = 0; index < 24; index += 1) {
-            context.beginPath();
-            context.fillStyle = index % 2 ? '#bfdbfe' : '#dbeafe';
-            context.arc(Math.random() * captchaImage.width, Math.random() * captchaImage.height, 1 + Math.random() * 2, 0, Math.PI * 2);
-            context.fill();
-        }
-        context.save();
-        context.translate(captchaImage.width / 2, captchaImage.height / 2);
-        context.rotate((Math.random() - 0.5) * 0.04);
-        context.fillStyle = '#1e3a8a';
-        context.font = '700 34px Inter, sans-serif';
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
-        context.fillText(expression, 0, 0);
-        context.restore();
-        captchaAccessibleText.textContent = `Soal matematika: ${firstNumber} tambah ${secondNumber}.`;
+        captchaToken = data.token;
+        captchaImage.src = data.image;
         captchaAnswerInput.value = '';
         captchaContainer.hidden = false;
-        submitLabel.textContent = 'Cari';
         positionCaptchaSubmitButton();
         captchaAnswerInput.focus();
-        return true;
     }
 
+    function hideCaptcha() {
+        captchaToken = undefined;
+        captchaContainer.hidden = true;
+        captchaImage.removeAttribute('src');
+        captchaAnswerInput.value = '';
+        searchForm.appendChild(submitButton);
+    }
+
+    function showSearchError(message) {
+        searchStatus.textContent = message;
+        searchStatus.classList.add('is-error');
+    }
+
+    function describeApiError(error) {
+        switch (error.message) {
+            case 'not_configured':
+                return 'Layanan pencarian belum dikonfigurasi.';
+            case 'rate_limited':
+                return 'Terlalu banyak permintaan. Coba lagi dalam beberapa saat.';
+            case 'invalid_query':
+                return `Masukkan minimal ${minQueryLength} huruf nama guru.`;
+            default:
+                return 'Data guru gagal dimuat. Periksa koneksi, lalu coba lagi.';
+        }
+    }
     function positionCaptchaSubmitButton() {
         if (captchaContainer.hidden) return;
         const destination = window.matchMedia('(max-width: 767px)').matches
@@ -234,74 +189,87 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    captchaRefreshButton.addEventListener('click', createCaptchaChallenge);
+    captchaRefreshButton.addEventListener('click', async () => {
+        captchaRefreshButton.disabled = true;
+        try {
+            await loadCaptchaChallenge();
+        } catch (error) {
+            hideCaptcha();
+            showSearchError(describeApiError(error));
+        } finally {
+            captchaRefreshButton.disabled = false;
+        }
+    });
     window.addEventListener('resize', positionCaptchaSubmitButton);
 
     searchForm.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const rawSearchTerm = searchInput.value.trim().replace(/\s+/g, ' ');
-        const searchTerm = rawSearchTerm.toLocaleLowerCase('id-ID');
-        const selectedKabKota = kabKotaSelect.value.toLocaleLowerCase('id-ID');
+        if (submitButton.disabled) return;
 
-        if (searchInput.value.length > 100) {
-            searchStatus.textContent = 'Nama pencarian maksimal 100 karakter.';
-            searchStatus.classList.add('is-error');
+        const searchTerm = searchInput.value.trim().replace(/\s+/g, ' ');
+        if (searchTerm.length < minQueryLength) {
+            showSearchError(`Masukkan minimal ${minQueryLength} huruf nama guru.`);
             return;
         }
-        if (!searchTerm && !selectedKabKota) {
-            searchStatus.textContent = 'Masukkan nama guru atau pilih Kab/Kota.';
-            searchStatus.classList.add('is-error');
+        if (searchTerm.length > maxQueryLength) {
+            showSearchError(`Nama pencarian maksimal ${maxQueryLength} karakter.`);
             return;
         }
 
-        if (captchaAnswer === undefined) {
-            resultsBody.replaceChildren();
-            resultsContainer.hidden = true;
-            pagination.hidden = true;
-            currentTeachers = [];
-            if (!createCaptchaChallenge()) return;
-            searchStatus.textContent = 'Jawab pertanyaan verifikasi untuk melanjutkan pencarian.';
-            searchStatus.classList.remove('is-error');
-            return;
-        }
-
-        if (!captchaAnswerInput.value || Number(captchaAnswerInput.value) !== captchaAnswer) {
-            searchStatus.textContent = 'Jawaban verifikasi salah. Silakan coba soal baru.';
-            searchStatus.classList.add('is-error');
-            createCaptchaChallenge();
-            return;
-        }
-
-        captchaAnswer = undefined;
-        captchaContainer.hidden = true;
-        captchaAnswerInput.value = '';
-        submitLabel.textContent = 'Cari';
-        searchForm.appendChild(submitButton);
-        searchStatus.textContent = 'Memuat data guru...';
-        searchStatus.classList.remove('is-error');
-        resultsContainer.hidden = true;
         submitButton.disabled = true;
+        searchStatus.classList.remove('is-error');
 
         try {
-            const teachers = await loadTeacherRows();
-            const matches = teachers.filter((teacher) => {
-                const matchesName = !searchTerm || teacher.name.toLocaleLowerCase('id-ID').includes(searchTerm);
-                const matchesKabKota = !selectedKabKota || teacher.kabKota.toLocaleLowerCase('id-ID') === selectedKabKota;
-                return matchesName && matchesKabKota;
+            if (captchaToken === undefined) {
+                resultsContainer.hidden = true;
+                currentTeachers = [];
+                searchStatus.textContent = 'Memuat verifikasi...';
+                await loadCaptchaChallenge();
+                searchStatus.textContent = 'Jawab pertanyaan verifikasi untuk melanjutkan pencarian.';
+                return;
+            }
+
+            const answer = captchaAnswerInput.value.trim();
+            if (!answer) {
+                showSearchError('Masukkan jawaban verifikasi.');
+                return;
+            }
+
+            searchStatus.textContent = 'Mencari data guru...';
+            resultsContainer.hidden = true;
+            const data = await requestSearchApi({
+                action: 'search',
+                q: searchTerm,
+                kab: kabKotaSelect.value,
+                token: captchaToken,
+                answer
             });
-            renderTeacherResults(matches);
-            searchStatus.textContent = matches.length
-                ? `${matches.length} data ditemukan.`
-                : 'Data tidak ditemukan.';
-        } catch {
-            teacherRowsPromise = null;
-            searchStatus.textContent = 'Data guru gagal dimuat. Periksa koneksi atau akses spreadsheet, lalu coba lagi.';
-            searchStatus.classList.add('is-error');
+            hideCaptcha();
+            const results = Array.isArray(data.results) ? data.results : [];
+            renderTeacherResults(results);
+            if (!results.length) {
+                searchStatus.textContent = 'Data tidak ditemukan.';
+            } else if (data.truncated) {
+                searchStatus.textContent = `${data.total} data ditemukan, menampilkan ${results.length} pertama. Perjelas nama atau pilih Kab/Kota.`;
+            } else {
+                searchStatus.textContent = `${results.length} data ditemukan.`;
+            }
+        } catch (error) {
+            if (error.message === 'captcha_failed') {
+                showSearchError('Jawaban verifikasi salah atau kedaluwarsa. Silakan coba soal baru.');
+                try {
+                    await loadCaptchaChallenge();
+                } catch {
+                    hideCaptcha();
+                }
+            } else {
+                hideCaptcha();
+                showSearchError(describeApiError(error));
+            }
         } finally {
             submitButton.disabled = false;
         }
     });
-
     // 2. Iframe Loading Management
     const iframe = document.getElementById('data-frame');
     const loader = document.getElementById('iframe-loader');
