@@ -44,7 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitButton = searchForm.querySelector('button[type="submit"]');
     // URL web app Apps Script (Deploy > Manage deployments), berakhiran /exec.
     const searchApiUrl = 'https://script.google.com/macros/s/AKfycbxq4ZIhzpZjOSiqNfNnT8kudjPdZCm4WBE33bjcAkP9JiqVDGLE7cCpQ_pjpSNJxNz0Xw/exec';
-    const minQueryLength = 3;
     const maxQueryLength = 100;
     const pageSize = 5;
     let currentTeachers = [];
@@ -134,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'rate_limited':
                 return 'Terlalu banyak permintaan. Coba lagi dalam beberapa saat.';
             case 'invalid_query':
-                return `Masukkan minimal ${minQueryLength} huruf nama guru.`;
+                return 'Masukkan nama guru atau pilih Kab/Kota.';
             default:
                 return 'Data guru gagal dimuat. Periksa koneksi, lalu coba lagi.';
         }
@@ -207,8 +206,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (submitButton.disabled) return;
 
         const searchTerm = searchInput.value.trim().replace(/\s+/g, ' ');
-        if (searchTerm.length < minQueryLength) {
-            showSearchError(`Masukkan minimal ${minQueryLength} huruf nama guru.`);
+        if (!searchTerm && !kabKotaSelect.value) {
+            showSearchError('Masukkan nama guru atau pilih Kab/Kota.');
             return;
         }
         if (searchTerm.length > maxQueryLength) {

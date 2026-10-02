@@ -10,7 +10,6 @@
 
 const SEARCH_SHEET_NAME = 'Data Gabungan';
 const SEARCH_FIRST_ROW = 2;
-const SEARCH_MIN_QUERY_LENGTH = 3;
 const SEARCH_MAX_QUERY_LENGTH = 100;
 const SEARCH_MAX_RESULTS = 50;
 const CAPTCHA_TTL_SECONDS = 300;
@@ -137,7 +136,7 @@ function searchTeachers_(params) {
   const query = normalizeText_(params.q);
   const kabKota = normalizeText_(params.kab);
 
-  if (query.length < SEARCH_MIN_QUERY_LENGTH || query.length > SEARCH_MAX_QUERY_LENGTH || kabKota.length > 50) {
+  if ((!query && !kabKota) || query.length > SEARCH_MAX_QUERY_LENGTH || kabKota.length > 50) {
     return { ok: false, error: 'invalid_query' };
   }
   if (!consumeCaptcha_(params.token, params.answer)) {
