@@ -79,7 +79,49 @@
 
       <form id="teacher-search-form" class="teacher-search-form" role="search">
         <label class="sr-only" for="teacher-search-input">Nama guru</label>
-        <input id="teacher-search-input" name="teacher-name" type="search" class="teacher-search-input" placeholder="Ketik nama guru..." autocomplete="off" required>
+        <input id="teacher-search-input" name="teacher-name" type="search" class="teacher-search-input" placeholder="Ketik nama guru..." autocomplete="off">
+        <label class="sr-only" for="teacher-search-kab-kota">Kabupaten/Kota</label>
+        <div class="teacher-search-location">
+          <i class="fa-solid fa-city teacher-search-location-icon" aria-hidden="true"></i>
+          <select id="teacher-search-kab-kota" name="kab-kota" class="teacher-search-select">
+          <option value="">Kab/Kota</option>
+          <option value="KAB. BANJARNEGARA">Kab Banjarnegara</option>
+          <option value="KAB. BANYUMAS">Kab Banyumas</option>
+          <option value="KAB. BATANG">Kab Batang</option>
+          <option value="KAB. BLORA">Kab Blora</option>
+          <option value="KAB. BOYOLALI">Kab Boyolali</option>
+          <option value="KAB. BREBES">Kab Brebes</option>
+          <option value="KAB. CILACAP">Kab Cilacap</option>
+          <option value="KAB. DEMAK">Kab Demak</option>
+          <option value="KAB. GROBOGAN">Kab Grobogan</option>
+          <option value="KAB. JEPARA">Kab Jepara</option>
+          <option value="KAB. KARANGANYAR">Kab Karanganyar</option>
+          <option value="KAB. KEBUMEN">Kab Kebumen</option>
+          <option value="KAB. KENDAL">Kab Kendal</option>
+          <option value="KAB. KLATEN">Kab Klaten</option>
+          <option value="KAB. KUDUS">Kab Kudus</option>
+          <option value="KAB. MAGELANG">Kab Magelang</option>
+          <option value="KAB. PATI">Kab Pati</option>
+          <option value="KAB. PEKALONGAN">Kab Pekalongan</option>
+          <option value="KAB. PEMALANG">Kab Pemalang</option>
+          <option value="KAB. PURBALINGGA">Kab Purbalingga</option>
+          <option value="KAB. PURWOREJO">Kab Purworejo</option>
+          <option value="KAB. REMBANG">Kab Rembang</option>
+          <option value="KAB. SEMARANG">Kab Semarang</option>
+          <option value="KAB. SRAGEN">Kab Sragen</option>
+          <option value="KAB. SUKOHARJO">Kab Sukoharjo</option>
+          <option value="KAB. TEGAL">Kab Tegal</option>
+          <option value="KAB. TEMANGGUNG">Kab Temanggung</option>
+          <option value="KAB. WONOGIRI">Kab Wonogiri</option>
+          <option value="KAB. WONOSOBO">Kab Wonosobo</option>
+          <option value="KOTA MAGELANG">Kota Magelang</option>
+          <option value="KOTA PEKALONGAN">Kota Pekalongan</option>
+          <option value="KOTA SALATIGA">Kota Salatiga</option>
+          <option value="KOTA SEMARANG">Kota Semarang</option>
+          <option value="KOTA SURAKARTA">Kota Surakarta</option>
+          <option value="KOTA TEGAL">Kota Tegal</option>
+          </select>
+        </div>
         <button type="submit" class="btn-primary teacher-search-button">
           <i class="fa-solid fa-magnifying-glass mr-2" aria-hidden="true"></i> Cari
         </button>

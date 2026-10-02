@@ -65,20 +65,60 @@ body {
 
 .teacher-search-form {
     display: flex;
+    width: 100%;
     gap: 0.75rem;
-    max-width: 42rem;
+    max-width: 56rem;
     margin: 0 auto;
 }
 .teacher-search-input {
-    flex: 1;
+    flex: 2;
     min-width: 0;
+    height: 3.125rem;
     padding: 0.75rem 1rem;
     border: 1px solid #d1d5db;
     border-radius: 0.5rem;
     color: #1f2937;
     outline: none;
 }
+.teacher-search-location {
+    position: relative;
+    flex: 1;
+    width: auto;
+    max-width: 100%;
+    min-width: var(--kab-kota-min-width, 0px);
+}
+.teacher-search-location-icon {
+    position: absolute;
+    top: 50%;
+    left: 0.875rem;
+    color: #6b7280;
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+.teacher-search-select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: 3.125rem;
+    padding: 0.75rem 2rem 0.75rem 2.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    color: #1f2937;
+    background-color: #fff;
+    font-size: 0.875rem;
+    outline: none;
+}
+.teacher-search-location.has-selection .teacher-search-location-icon {
+    display: none;
+}
+.teacher-search-location.has-selection .teacher-search-select {
+    padding-left: 1rem;
+}
 .teacher-search-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.teacher-search-select:focus {
     border-color: #2563eb;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
@@ -88,7 +128,7 @@ body {
 .teacher-search-status {
     min-height: 1.5rem;
     margin: 1rem auto 0;
-    max-width: 42rem;
+    max-width: 56rem;
     color: #4b5563;
     font-size: 0.875rem;
 }
@@ -130,9 +170,17 @@ body {
     border-bottom: 0;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
     .teacher-search-form {
         flex-direction: column;
+    }
+    .teacher-search-input,
+    .teacher-search-location {
+        flex: initial;
+    }
+    .teacher-search-location {
+        width: fit-content;
+        flex: initial;
     }
     .teacher-search-button {
         width: 100%;
@@ -140,6 +188,23 @@ body {
     .teacher-results-table th,
     .teacher-results-table td {
         padding: 0.65rem 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .teacher-search-form {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        flex-direction: initial;
+    }
+    .teacher-search-input,
+    .teacher-search-location {
+        width: 100%;
+        min-width: 0;
+        flex: initial;
+    }
+    .teacher-search-button {
+        grid-column: 1 / -1;
     }
 }
 

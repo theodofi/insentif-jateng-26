@@ -26,11 +26,40 @@ document.addEventListener('DOMContentLoaded', () => {
     // Search the public teacher list from the linked spreadsheet.
     const searchForm = document.getElementById('teacher-search-form');
     const searchInput = document.getElementById('teacher-search-input');
+    const kabKotaSelect = document.getElementById('teacher-search-kab-kota');
+    const kabKotaLocation = kabKotaSelect.closest('.teacher-search-location');
     const searchStatus = document.getElementById('teacher-search-status');
     const resultsContainer = document.getElementById('teacher-search-results');
     const resultsBody = document.getElementById('teacher-search-results-body');
     const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/1dYEKUGur51SGQLqzUkJigaNfMCC_rdfUsd3BsapmM8k/gviz/tq?tqx=out:csv&sheet=Data%20Gabungan&range=A2:C';
     let teacherRowsPromise;
+
+    function updateKabKotaControl() {
+        const hasSelection = Boolean(kabKotaSelect.value);
+        kabKotaLocation.classList.toggle('has-selection', hasSelection);
+
+        const selectStyle = window.getComputedStyle(kabKotaSelect);
+        const measureElement = document.createElement('span');
+        measureElement.style.position = 'absolute';
+        measureElement.style.visibility = 'hidden';
+        measureElement.style.whiteSpace = 'nowrap';
+        measureElement.style.font = selectStyle.font;
+        measureElement.textContent = kabKotaSelect.selectedOptions[0].textContent;
+        document.body.appendChild(measureElement);
+
+        const textWidth = measureElement.getBoundingClientRect().width;
+        measureElement.remove();
+        const horizontalSpace = [
+            selectStyle.paddingLeft,
+            selectStyle.paddingRight,
+            selectStyle.borderLeftWidth,
+            selectStyle.borderRightWidth
+        ].reduce((total, value) => total + parseFloat(value), 0);
+        kabKotaLocation.style.setProperty('--kab-kota-min-width', `${Math.ceil(textWidth + horizontalSpace)}px`);
+    }
+
+    kabKotaSelect.addEventListener('change', updateKabKotaControl);
+    updateKabKotaControl();
 
     function parseCsv(csv) {
         const rows = [];
@@ -99,7 +128,13 @@ document.addEventListener('DOMContentLoaded', () => {
     searchForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         const searchTerm = searchInput.value.trim().toLocaleLowerCase('id-ID');
-        if (!searchTerm) return;
+        const selectedKabKota = kabKotaSelect.value.toLocaleLowerCase('id-ID');
+        if (!searchTerm && !selectedKabKota) {
+            searchStatus.textContent = 'Masukkan nama guru atau pilih Kab/Kota.';
+            searchStatus.classList.remove('is-error');
+            resultsContainer.hidden = true;
+            return;
+        }
 
         searchStatus.textContent = 'Memuat data guru...';
         searchStatus.classList.remove('is-error');
@@ -107,11 +142,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const teachers = await loadTeacherRows();
-            const matches = teachers.filter((teacher) => teacher.name.toLocaleLowerCase('id-ID').includes(searchTerm));
+            const matches = teachers.filter((teacher) => {
+                const matchesName = !searchTerm || teacher.name.toLocaleLowerCase('id-ID').includes(searchTerm);
+                const matchesKabKota = !selectedKabKota || teacher.kabKota.toLocaleLowerCase('id-ID') === selectedKabKota;
+                return matchesName && matchesKabKota;
+            });
             renderTeacherResults(matches);
             searchStatus.textContent = matches.length
-                ? `${matches.length} data nama ditemukan.`
-                : 'Nama tidak ditemukan.';
+                ? `${matches.length} data ditemukan.`
+                : 'Data tidak ditemukan.';
         } catch (error) {
             teacherRowsPromise = null;
             searchStatus.textContent = 'Data guru gagal dimuat. Periksa koneksi atau akses spreadsheet, lalu coba lagi.';
