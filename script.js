@@ -110,8 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const matches = teachers.filter((teacher) => teacher.name.toLocaleLowerCase('id-ID').includes(searchTerm));
             renderTeacherResults(matches);
             searchStatus.textContent = matches.length
-                ? `${matches.length} data guru ditemukan.`
-                : 'Nama guru tidak ditemukan.';
+                ? `${matches.length} data nama ditemukan.`
+                : 'Nama tidak ditemukan.';
         } catch (error) {
             teacherRowsPromise = null;
             searchStatus.textContent = 'Data guru gagal dimuat. Periksa koneksi atau akses spreadsheet, lalu coba lagi.';
