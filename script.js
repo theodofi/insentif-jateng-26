@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = new URL(searchApiUrl);
         Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
         const controller = new AbortController();
-        const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+        const timeoutId = window.setTimeout(() => controller.abort(), 30000);
         return fetch(url, {
             cache: 'no-store',
             credentials: 'omit',
@@ -127,6 +127,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function describeApiError(error) {
+        if (error.name === 'AbortError') {
+            return 'Layanan pencarian merespons terlalu lama. Silakan coba lagi.';
+        }
         switch (error.message) {
             case 'not_configured':
                 return 'Layanan pencarian belum dikonfigurasi.';
