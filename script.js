@@ -35,15 +35,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const previousPageButton = document.getElementById('teacher-search-previous');
     const nextPageButton = document.getElementById('teacher-search-next');
     const pageStatus = document.getElementById('teacher-search-page-status');
+    const captchaContainer = document.getElementById('teacher-search-captcha');
+    const captchaQuestion = document.getElementById('teacher-search-captcha-question');
+    const captchaImage = document.getElementById('teacher-search-captcha-image');
+    const captchaAccessibleText = document.getElementById('teacher-search-captcha-accessible-text');
+    const captchaActions = document.getElementById('teacher-search-captcha-actions');
+    const captchaAnswerInput = document.getElementById('teacher-search-captcha-answer');
+    const captchaRefreshButton = document.getElementById('teacher-search-captcha-refresh');
+    const submitLabel = document.getElementById('teacher-search-submit-label');
+    const submitButton = searchForm.querySelector('button[type="submit"]');
     const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/1dYEKUGur51SGQLqzUkJigaNfMCC_rdfUsd3BsapmM8k/gviz/tq?tqx=out:csv&sheet=Data%20Gabungan&range=A2:C';
-    const teacherRowsCacheKey = 'teacher-list-cache-v1';
-    const teacherRowsCacheDuration = 10 * 60 * 1000;
     const retryCooldown = 30 * 1000;
     const pageSize = 5;
     let teacherRowsPromise;
     let retryAfter = 0;
     let currentTeachers = [];
     let currentPage = 1;
+    let captchaAnswer;
 
     function updateKabKotaControl() {
         const hasSelection = Boolean(kabKotaSelect.value);
@@ -106,28 +114,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return rows;
     }
 
-    function readTeacherRowsCache() {
-        try {
-            const cachedData = JSON.parse(window.localStorage.getItem(teacherRowsCacheKey) || 'null');
-            const cacheAge = cachedData ? Date.now() - cachedData.savedAt : Infinity;
-            if (Array.isArray(cachedData?.rows) && cacheAge >= 0 && cacheAge < teacherRowsCacheDuration) {
-                return cachedData.rows;
-            }
-        } catch {
-            return null;
-        }
-        return null;
-    }
-
     function loadTeacherRows() {
         if (!teacherRowsPromise) {
-            const cachedRows = readTeacherRowsCache();
-            if (cachedRows) {
-                teacherRowsPromise = Promise.resolve(cachedRows);
-            } else if (Date.now() < retryAfter) {
+            if (Date.now() < retryAfter) {
                 return Promise.reject(new Error('Spreadsheet retry cooldown is active.'));
             } else {
-                teacherRowsPromise = fetch(spreadsheetUrl)
+                const controller = new AbortController();
+                const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+                teacherRowsPromise = fetch(spreadsheetUrl, { cache: 'no-store', signal: controller.signal })
                     .then((response) => {
                         if (!response.ok) throw new Error('Spreadsheet tidak dapat dimuat.');
                         return response.text();
@@ -137,16 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         satminkal: (row[1] || '').trim(),
                         kabKota: (row[2] || '').trim()
                     })).filter((teacher) => teacher.name))
-                    .then((teachers) => {
-                        try {
-                            window.localStorage.setItem(teacherRowsCacheKey, JSON.stringify({
-                                savedAt: Date.now(),
-                                rows: teachers
-                            }));
-                        } catch {
-                        }
-                        return teachers;
-                    })
+                    .finally(() => window.clearTimeout(timeoutId))
                     .catch((error) => {
                         retryAfter = Date.now() + retryCooldown;
                         throw error;
@@ -154,6 +139,48 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         return teacherRowsPromise;
+    }
+
+    function createCaptchaChallenge() {
+        const firstNumber = Math.floor(Math.random() * 9) + 1;
+        const secondNumber = Math.floor(Math.random() * 9) + 1;
+        const context = captchaImage.getContext('2d');
+        if (!context) {
+            captchaContainer.hidden = true;
+            captchaAnswer = undefined;
+            submitLabel.textContent = 'Cari';
+            searchStatus.textContent = 'Peramban tidak mendukung verifikasi CAPTCHA.';
+            searchStatus.classList.add('is-error');
+            return false;
+        }
+
+        captchaAnswer = firstNumber + secondNumber;
+        const expression = `${firstNumber} + ${secondNumber} = ?`;
+        context.clearRect(0, 0, captchaImage.width, captchaImage.height);
+        context.fillStyle = '#eff6ff';
+        context.fillRect(0, 0, captchaImage.width, captchaImage.height);
+        for (let index = 0; index < 24; index += 1) {
+            context.beginPath();
+            context.fillStyle = index % 2 ? '#bfdbfe' : '#dbeafe';
+            context.arc(Math.random() * captchaImage.width, Math.random() * captchaImage.height, 1 + Math.random() * 2, 0, Math.PI * 2);
+            context.fill();
+        }
+        context.save();
+        context.translate(captchaImage.width / 2, captchaImage.height / 2);
+        context.rotate((Math.random() - 0.5) * 0.04);
+        context.fillStyle = '#1e3a8a';
+        context.font = '700 34px Inter, sans-serif';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillText(expression, 0, 0);
+        context.restore();
+        captchaAccessibleText.textContent = `Soal matematika: ${firstNumber} tambah ${secondNumber}.`;
+        captchaAnswerInput.value = '';
+        captchaContainer.hidden = false;
+        submitLabel.textContent = 'Cari';
+        captchaActions.appendChild(submitButton);
+        captchaAnswerInput.focus();
+        return true;
     }
 
     function renderTeacherResults(teachers) {
@@ -198,20 +225,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    captchaRefreshButton.addEventListener('click', createCaptchaChallenge);
+
     searchForm.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const searchTerm = searchInput.value.trim().toLocaleLowerCase('id-ID');
+        const rawSearchTerm = searchInput.value.trim().replace(/\s+/g, ' ');
+        const searchTerm = rawSearchTerm.toLocaleLowerCase('id-ID');
         const selectedKabKota = kabKotaSelect.value.toLocaleLowerCase('id-ID');
+
+        if (searchInput.value.length > 100) {
+            searchStatus.textContent = 'Nama pencarian maksimal 100 karakter.';
+            searchStatus.classList.add('is-error');
+            return;
+        }
         if (!searchTerm && !selectedKabKota) {
             searchStatus.textContent = 'Masukkan nama guru atau pilih Kab/Kota.';
-            searchStatus.classList.remove('is-error');
-            resultsContainer.hidden = true;
+            searchStatus.classList.add('is-error');
             return;
         }
 
+        if (captchaAnswer === undefined) {
+            resultsBody.replaceChildren();
+            resultsContainer.hidden = true;
+            pagination.hidden = true;
+            currentTeachers = [];
+            if (!createCaptchaChallenge()) return;
+            searchStatus.textContent = 'Jawab pertanyaan verifikasi untuk melanjutkan pencarian.';
+            searchStatus.classList.remove('is-error');
+            return;
+        }
+
+        if (!captchaAnswerInput.value || Number(captchaAnswerInput.value) !== captchaAnswer) {
+            searchStatus.textContent = 'Jawaban verifikasi salah. Silakan coba soal baru.';
+            searchStatus.classList.add('is-error');
+            createCaptchaChallenge();
+            return;
+        }
+
+        captchaAnswer = undefined;
+        captchaContainer.hidden = true;
+        captchaAnswerInput.value = '';
+        submitLabel.textContent = 'Cari';
+        searchForm.appendChild(submitButton);
         searchStatus.textContent = 'Memuat data guru...';
         searchStatus.classList.remove('is-error');
         resultsContainer.hidden = true;
+        submitButton.disabled = true;
 
         try {
             const teachers = await loadTeacherRows();
@@ -224,10 +283,12 @@ document.addEventListener('DOMContentLoaded', () => {
             searchStatus.textContent = matches.length
                 ? `${matches.length} data ditemukan.`
                 : 'Data tidak ditemukan.';
-        } catch (error) {
+        } catch {
             teacherRowsPromise = null;
             searchStatus.textContent = 'Data guru gagal dimuat. Periksa koneksi atau akses spreadsheet, lalu coba lagi.';
             searchStatus.classList.add('is-error');
+        } finally {
+            submitButton.disabled = false;
         }
     });
 
@@ -245,6 +306,12 @@ document.addEventListener('DOMContentLoaded', () => {
             iframe.style.opacity = '1';
         }, 500); // Tunggu transisi opacity selesai
     };
+
+    document.addEventListener('click', (event) => {
+        if (!(event.target instanceof Element)) return;
+        const toastLink = event.target.closest('[data-toast]');
+        if (toastLink) showToast(toastLink.dataset.toast);
+    });
 });
 
 // 3. Sistem Notifikasi Interaktif (Toast)

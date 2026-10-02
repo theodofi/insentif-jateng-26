@@ -135,6 +135,79 @@ body {
 .teacher-search-status.is-error {
     color: #b91c1c;
 }
+.teacher-search-captcha {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    max-width: 56rem;
+    margin: 1rem auto 0;
+    padding: 1rem;
+    border: 1px solid #bfdbfe;
+    border-radius: 0.5rem;
+    background: #eff6ff;
+}
+.teacher-search-captcha[hidden] {
+    display: none;
+}
+.teacher-search-captcha-content {
+    flex: 1;
+    min-width: 0;
+}
+.teacher-search-captcha-actions {
+    flex-shrink: 0;
+}
+.teacher-search-captcha-question {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #1f2937;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+.teacher-search-captcha-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 0.75rem;
+    border: 1px solid #bfdbfe;
+    border-radius: 0.375rem;
+}
+.teacher-search-captcha-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.teacher-search-captcha-answer-label {
+    color: #374151;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+.teacher-search-captcha-input {
+    width: 8rem;
+    height: 2.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+}
+.teacher-search-captcha-refresh {
+    min-height: 2.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    color: #374151;
+    background: #fff;
+    font-size: 0.875rem;
+}
+.teacher-search-captcha-input:focus,
+.teacher-search-captcha-refresh:focus {
+    border-color: #2563eb;
+    outline: 2px solid rgba(37, 99, 235, 0.2);
+}
+.teacher-search-captcha-help {
+    margin-top: 0.5rem;
+    color: #4b5563;
+    font-size: 0.75rem;
+}
 .teacher-results {
     max-width: 56rem;
     margin: 0 auto;
@@ -218,6 +291,14 @@ body {
         flex: initial;
     }
     .teacher-search-button {
+        width: 100%;
+    }
+    .teacher-search-captcha {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .teacher-search-captcha-actions,
+    .teacher-search-captcha-actions .teacher-search-button {
         width: 100%;
     }
     .teacher-results-table th,
