@@ -205,7 +205,7 @@ body {
     font-size: 0.875rem;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
     .teacher-search-form {
         flex-direction: column;
     }
