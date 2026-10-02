@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextPageButton = document.getElementById('teacher-search-next');
     const pageStatus = document.getElementById('teacher-search-page-status');
     const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/1dYEKUGur51SGQLqzUkJigaNfMCC_rdfUsd3BsapmM8k/gviz/tq?tqx=out:csv&sheet=Data%20Gabungan&range=A2:C';
-    const pageSize = 10;
+    const pageSize = 5;
     let teacherRowsPromise;
     let currentTeachers = [];
     let currentPage = 1;
