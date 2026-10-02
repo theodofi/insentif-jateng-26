@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const captchaRefreshButton = document.getElementById('teacher-search-captcha-refresh');
     const submitButton = searchForm.querySelector('button[type="submit"]');
     // URL web app Apps Script (Deploy > Manage deployments), berakhiran /exec.
-    const searchApiUrl = '';
+    const searchApiUrl = 'https://script.google.com/macros/s/AKfycbxq4ZIhzpZjOSiqNfNnT8kudjPdZCm4WBE33bjcAkP9JiqVDGLE7cCpQ_pjpSNJxNz0Xw/exec';
     const minQueryLength = 3;
     const maxQueryLength = 100;
     const pageSize = 5;
