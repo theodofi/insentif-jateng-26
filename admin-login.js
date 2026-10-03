@@ -11,7 +11,11 @@
     const mobileSidebar = document.getElementById('mobile-admin-sidebar');
     const mobileSidebarClose = document.getElementById('mobile-admin-menu-close');
     const mobileMenuBackdrop = document.getElementById('mobile-admin-menu-backdrop');
+    const dashboardActions = document.querySelector('.admin-dashboard-actions');
     const mobileViewport = window.matchMedia('(max-width: 767px)');
+    const dashboardActionsPlaceholder = dashboardActions
+        ? document.createComment('admin-dashboard-actions-slot')
+        : null;
     let loginView;
     let googleButton;
     let loginMessage;
@@ -19,6 +23,19 @@
     let googleIdentityInitialized = false;
 
     const buttonClasses = 'inline-flex flex-shrink-0 items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm';
+
+    if (dashboardActionsPlaceholder) {
+        dashboardActions.parentNode.insertBefore(dashboardActionsPlaceholder, dashboardActions);
+    }
+
+    function placeDashboardActions() {
+        if (!dashboardActions || !mobileSidebar || !dashboardActionsPlaceholder) return;
+        if (mobileViewport.matches) {
+            if (dashboardActions.parentNode !== mobileSidebar) mobileSidebar.appendChild(dashboardActions);
+        } else if (dashboardActions.parentNode !== dashboardActionsPlaceholder.parentNode) {
+            dashboardActionsPlaceholder.parentNode.insertBefore(dashboardActions, dashboardActionsPlaceholder);
+        }
+    }
 
     function setMobileSidebarOpen(open, restoreFocus = true) {
         if (!mobileSidebar || !mobileMenuToggle || !mobileMenuBackdrop) return;
@@ -286,6 +303,7 @@
     });
 
     if (mobileMenuToggle && mobileSidebar && mobileSidebarClose && mobileMenuBackdrop) {
+        placeDashboardActions();
         setMobileSidebarOpen(false, false);
         mobileMenuToggle.addEventListener('click', () => {
             setMobileSidebarOpen(!mobileSidebar.classList.contains('is-open'));
@@ -298,6 +316,7 @@
             }
         });
         window.addEventListener('resize', () => {
+            placeDashboardActions();
             setMobileSidebarOpen(false, false);
             renderAccount();
         });
