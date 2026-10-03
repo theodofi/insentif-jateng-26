@@ -1,28 +1,6 @@
 // script.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Live Time Update
-    const timeDisplay = document.getElementById('live-time');
-    
-    function updateTime() {
-        const now = new Date();
-        const options = { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric',
-            hour: '2-digit', 
-            minute: '2-digit',
-            second: '2-digit'
-        };
-        // Menggunakan format waktu Indonesia (id-ID)
-        timeDisplay.textContent = now.toLocaleDateString('id-ID', options);
-    }
-    
-    // Update setiap 1 detik
-    setInterval(updateTime, 1000);
-    updateTime();
-
     // Search teacher data through the Apps Script web app (the spreadsheet itself stays private).
     const searchForm = document.getElementById('teacher-search-form');
     const searchInput = document.getElementById('teacher-search-input');

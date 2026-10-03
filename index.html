@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="no-referrer">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' https://lh3.googleusercontent.com data:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' https://lh3.googleusercontent.com https://*.googleusercontent.com data:; connect-src 'self' https://accounts.google.com https://script.google.com https://script.googleusercontent.com; frame-src https://accounts.google.com; upgrade-insecure-requests">
   <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1csgQfWYTIHnOzJ7U2ttT93TTv9DRn1zs">
   <link rel="shortcut icon" type="image/png" href="https://lh3.googleusercontent.com/d/1csgQfWYTIHnOzJ7U2ttT93TTv9DRn1zs">
   <title>Portal Utama Insentif | Bimkris Jateng</title>
@@ -18,11 +18,14 @@
   
   <!-- Custom CSS -->
   <link rel="stylesheet" href="style.css">
+  <script src="portal-config.js" defer></script>
+  <script src="portal-api.js" defer></script>
+  <script src="admin-login.js" defer></script>
 </head>
 <body class="bg-slate-50 text-gray-800 flex flex-col min-h-screen">
 
   <!-- HEADER -->
-  <header class="bg-white border-b border-gray-200 py-4 px-6 shadow-sm fade-in-up">
+  <header class="relative z-50 bg-white border-b border-gray-200 py-4 px-6 shadow-sm fade-in-up">
     <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
       
       <!-- TEMPAT LOGO -->
@@ -34,10 +37,23 @@
         </div>
       </div>
 
-      <!-- Live Waktu -->
-      <div class="text-right text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-lg border border-gray-100">
-        <i class="fa-regular fa-clock text-blue-500 mr-1"></i>
-        <span id="live-time">Memuat waktu...</span>
+      <div class="relative z-50" id="admin-account">
+        <button id="admin-login-button" type="button" aria-haspopup="menu" aria-expanded="false" class="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 bg-blue-50 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <i class="fa-solid fa-lock" aria-hidden="true"></i>
+          <span>Login Admin</span>
+        </button>
+        <div id="admin-profile-menu" role="menu" hidden class="absolute right-0 mt-2 w-64 rounded-lg border border-gray-200 bg-white p-2 shadow-lg">
+          <p id="admin-profile-email" class="truncate px-3 py-2 text-xs font-semibold text-gray-500"></p>
+          <a role="menuitem" href="admin/ajuan.html" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
+            <i class="fa-solid fa-file-circle-check w-4 text-center" aria-hidden="true"></i>
+            <span>Panel Ajuan</span>
+          </a>
+          <a role="menuitem" href="admin/bulan-berjalan.html" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700">
+            <i class="fa-solid fa-calendar-check w-4 text-center" aria-hidden="true"></i>
+            <span>Panel Bulan Berjalan</span>
+          </a>
+          <button id="admin-logout-button" type="button" role="menuitem" class="mt-1 w-full rounded-md px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50">Keluar</button>
+        </div>
       </div>
     </div>
   </header>
@@ -361,12 +377,6 @@
     <footer class="bg-white border-t border-gray-200 py-6 text-center text-sm text-gray-500 mt-auto">
       <p>&copy; 2026 Bimbingan Masyarakat Kristen</p>
       <p>Kantor Wilayah Kementerian Agama Provinsi Jawa Tengah</p>
-      <p class="text-xs mt-2">
-        Panel admin:
-        <a href="admin/ajuan.html" class="text-blue-600 hover:underline">Ajuan</a>
-        <span aria-hidden="true">|</span>
-        <a href="admin/bulan-berjalan.html" class="text-blue-600 hover:underline">Bulan Berjalan</a>
-      </p>
       <p class="text-xs mt-1">Dikembangkan oleh <a href="https://github.com/theodofi" rel="noreferrer">@theodofi</a></p>
     </footer>
 

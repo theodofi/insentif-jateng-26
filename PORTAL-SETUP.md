@@ -22,4 +22,8 @@ The deployment URLs are configured in `netlify/functions/portal-api.js`. Update 
 
 Deploy the repository normally. Netlify detects the function in `netlify/functions/portal-api.js`; the `_headers` file applies CSP and browser security headers. The main portal links to the static public pages, and admin panels are available at `/admin/ajuan.html` and `/admin/bulan-berjalan.html`.
 
-After deployment, check both public monitors, sign in with an allowlisted account on both admin panels, and verify that non-allowlisted Google accounts are rejected before testing admin reads, status saves, and PDF generation.
+The home-page Google sign-in checks the ID token against both Apps Script projects. Only after both APIs accept the account does the portal show the Google profile and panel links. The admin panels revalidate that token against their own allowlist before loading or changing data.
+
+The verified ID token is held in `sessionStorage` for the current browser tab so the user can open either panel without signing in again. It is removed when the user selects **Keluar** and is rejected by the backend after expiry.
+
+After deployment, check both public monitors, sign in with an allowlisted account, open both admin panels from the profile menu, and verify that non-allowlisted Google accounts are rejected before testing admin reads, status saves, and PDF generation.

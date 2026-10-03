@@ -9,6 +9,7 @@
         'simpanStatusVerval'
     ]);
     const requestTimeout = 60000;
+    const adminSessionKey = 'portal-admin-session';
     let adminCredential;
     let activeWorkflow;
     let authGate;
@@ -65,9 +66,69 @@
             forbidden: 'Akun Google ini tidak memiliki akses admin.',
             auth_not_configured: 'Client ID Google belum dikonfigurasi.',
             invalid_admin_token: 'Sesi Google tidak valid. Silakan masuk kembali.',
+            identity_mismatch: 'Akun Google tidak diizinkan pada kedua panel admin.',
+            session_storage_unavailable: 'Penyimpanan sesi browser tidak tersedia. Izinkan penyimpanan sesi lalu coba lagi.',
             bad_request: 'Permintaan tidak valid.'
         };
         return messages[error.message] || 'Gagal menghubungi server. Periksa koneksi lalu coba lagi.';
+    }
+
+    function getAdminSession() {
+        let stored;
+        try {
+            stored = window.sessionStorage.getItem(adminSessionKey);
+        } catch {
+            throw new Error('session_storage_unavailable');
+        }
+        if (!stored) return null;
+        try {
+            const session = JSON.parse(stored);
+            if (session && typeof session.credential === 'string' && typeof session.email === 'string') {
+                return session;
+            }
+            clearAdminSession();
+            return null;
+        } catch {
+            clearAdminSession();
+            return null;
+        }
+    }
+
+    function saveAdminSession(session) {
+        const previous = getAdminSession();
+        const savedSession = {
+            credential: session.credential,
+            email: session.email,
+            picture: session.picture || (
+                previous?.credential === session.credential ? previous.picture : ''
+            )
+        };
+        try {
+            window.sessionStorage.setItem(adminSessionKey, JSON.stringify(savedSession));
+        } catch {
+            throw new Error('session_storage_unavailable');
+        }
+        return savedSession;
+    }
+
+    function clearAdminSession() {
+        try {
+            window.sessionStorage.removeItem(adminSessionKey);
+        } catch {
+            throw new Error('session_storage_unavailable');
+        }
+    }
+
+    async function authenticateAdmin(credential) {
+        if (typeof credential !== 'string' || !credential || credential.length > 8192) {
+            throw new Error('invalid_admin_token');
+        }
+        const results = await Promise.all(['ajuan', 'berjalan'].map(workflow =>
+            request(workflow, { action: 'auth', credential }, 'POST')
+        ));
+        const emails = results.map(result => String(result.email || '').trim().toLowerCase());
+        if (!emails[0] || emails[0] !== emails[1]) throw new Error('identity_mismatch');
+        return { email: results[0].email };
     }
 
     function createAuthGate(workflow) {
@@ -76,7 +137,7 @@
         overlay.setAttribute('role', 'dialog');
         overlay.setAttribute('aria-modal', 'true');
         overlay.setAttribute('aria-labelledby', 'portal-admin-auth-title');
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(15,23,42,.72);';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;padding:1rem;background:rgba(15,23,42,.72);';
 
         const card = document.createElement('div');
         card.style.cssText = 'width:min(100%,28rem);padding:2rem;border-radius:1rem;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center;font-family:Inter,Arial,sans-serif;';
@@ -121,6 +182,7 @@
         logout.style.cssText = 'padding:.3rem .55rem;border:0;border-radius:.35rem;background:#e5e7eb;color:#111827;cursor:pointer';
         logout.addEventListener('click', () => {
             adminCredential = undefined;
+            clearAdminSession();
             badge.remove();
             userBadge = null;
             window.google?.accounts?.id?.disableAutoSelect();
@@ -140,8 +202,10 @@
                 credential: response.credential
             }, 'POST');
             adminCredential = response.credential;
+            saveAdminSession({ credential: response.credential, email: result.email });
             authMessage.textContent = '';
             authGate.hidden = true;
+            authGate.style.display = 'none';
             addAdminControls(result.email);
             window.dispatchEvent(new CustomEvent('portal-admin-ready', { detail: { email: result.email } }));
         } catch (error) {
@@ -153,6 +217,7 @@
     async function openAuthGate() {
         if (!authGate) createAuthGate(activeWorkflow);
         authGate.hidden = false;
+        authGate.style.display = 'flex';
         authMessage.textContent = '';
         googleButton.replaceChildren();
 
@@ -186,8 +251,28 @@
     async function initializeAdmin(workflow) {
         if (!['ajuan', 'berjalan'].includes(workflow)) throw new Error('bad_request');
         activeWorkflow = workflow;
+        const session = getAdminSession();
+        let sessionError;
+        if (session) {
+            try {
+                const result = await request(workflow, {
+                    action: 'auth',
+                    credential: session.credential
+                }, 'POST');
+                adminCredential = session.credential;
+                saveAdminSession({ credential: session.credential, email: result.email });
+                addAdminControls(result.email);
+                window.dispatchEvent(new CustomEvent('portal-admin-ready', { detail: { email: result.email } }));
+                return;
+            } catch (error) {
+                adminCredential = undefined;
+                if (error.message === 'forbidden') clearAdminSession();
+                else sessionError = error;
+            }
+        }
         createAuthGate(workflow);
         await openAuthGate();
+        if (sessionError) authMessage.textContent = showApiError(sessionError);
     }
 
     async function publicCall(functionName, args) {
@@ -206,11 +291,22 @@
             method: functionName,
             args: JSON.stringify(args),
             credential: adminCredential
-        }, 'POST').then((result) => result.data);
+        }, 'POST').then((result) => result.data).catch(error => {
+            if (error.message === 'forbidden') {
+                adminCredential = undefined;
+                clearAdminSession();
+                void openAuthGate();
+            }
+            throw error;
+        });
     }
 
     window.portalApi = Object.freeze({
         initializeAdmin,
+        authenticateAdmin,
+        getAdminSession,
+        saveAdminSession,
+        clearAdminSession,
         publicCall,
         adminCall,
         showApiError
