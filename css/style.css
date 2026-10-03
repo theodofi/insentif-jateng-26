@@ -1,4 +1,4 @@
-/* style.css */
+/* Shared portal and dashboard styles */
 body { 
     font-family: 'Inter', sans-serif; 
     background-color: #f8fafc;
@@ -472,4 +472,346 @@ body {
 .toast-show {
     transform: translateY(0) !important;
     opacity: 1 !important;
+}
+
+.portal-header-inner {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.portal-header-branding {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.portal-header-title-group {
+    min-width: 0;
+}
+
+.portal-header-logo {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+}
+
+.portal-header-eyebrow {
+    margin-bottom: 0.25rem;
+    font-size: 0.625rem;
+    letter-spacing: 0.5px;
+}
+
+.portal-header-title {
+    font-size: clamp(1.125rem, 2.2vw, 2rem);
+    line-height: 1.1;
+}
+
+.admin-dashboard-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.portal-header-account-empty,
+#mobile-admin-menu-toggle,
+#mobile-admin-menu-backdrop[hidden] {
+    display: none;
+}
+
+@media (min-width: 992px) {
+    .admin-dashboard-actions {
+        flex-direction: row;
+        align-items: center;
+        width: auto;
+    }
+}
+
+@media (max-width: 767px) {
+    #mobile-admin-menu-toggle {
+        display: inline-flex;
+        flex: 0 0 auto;
+    }
+
+    .portal-header-inner {
+        gap: 0.5rem;
+    }
+
+    .portal-header-branding {
+        gap: 0.625rem;
+    }
+
+    .portal-header-logo {
+        width: 44px;
+        height: 44px;
+    }
+
+    .portal-header-eyebrow {
+        font-size: 0.55rem;
+    }
+
+    .portal-header-title {
+        font-size: 1.125rem;
+    }
+
+    #mobile-admin-sidebar > .admin-dashboard-actions {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    #mobile-admin-sidebar > .admin-dashboard-actions::before {
+        content: "Aksi Halaman";
+        display: block;
+        margin-bottom: 0.625rem;
+        color: #6b7280;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+}
+
+[data-portal-workflow] {
+    color: #1e293b;
+    background-color: #f1f5f9;
+    font-family: 'Inter', sans-serif;
+}
+
+.wide-container {
+    max-width: 1350px;
+    width: 95%;
+    margin: 32px auto;
+    padding: 40px;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
+}
+
+.header-inner {
+    max-width: 1350px;
+    width: 95%;
+}
+
+.logo-img {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+}
+
+[data-portal-workflow] .summary-metric-label {
+    font-size: 10px;
+}
+
+[data-portal-workflow] .dashboard-filter-control {
+    max-width: 280px;
+}
+
+[data-portal-workflow]:not([data-header-account="empty"]) .dashboard-file-filter {
+    max-width: 300px;
+}
+
+[data-portal-workflow]:not([data-header-account="empty"]) .modal {
+    display: none;
+    position: fixed;
+    z-index: 9999 !important;
+    inset: 0;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+}
+
+[data-portal-workflow]:not([data-header-account="empty"]) .verval-modal-dialog {
+    max-width: 1150px;
+}
+
+[data-portal-workflow]:not([data-header-account="empty"]) #btnBukaTabBaru,
+[data-portal-workflow]:not([data-header-account="empty"]) #noFileMsg {
+    display: none;
+}
+
+[data-portal-workflow]:not([data-header-account="empty"]) .catatan-input {
+    resize: none;
+    overflow-y: hidden;
+    box-sizing: border-box;
+    line-height: 1.4;
+}
+
+[data-portal-workflow]:not([data-header-account="empty"]) .checklist-section-label,
+[data-portal-workflow]:not([data-header-account="empty"]) .status-section-label {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+[data-portal-workflow]:not([data-header-account="empty"]) .checklist-scroll-container {
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+[data-portal-workflow]:not([data-header-account="empty"]) .status-quick-set {
+    font-size: 11px;
+}
+
+[data-portal-workflow]:not([data-header-account="empty"]) #btnSimpanStatus {
+    height: 54px;
+    font-size: 15px;
+}
+
+[data-portal-workflow^="berjalan"]:not([data-header-account="empty"]) .checklist-month-title {
+    font-size: 13px !important;
+    text-transform: uppercase;
+}
+
+[data-portal-workflow^="ajuan"]:not([data-header-account="empty"]) .checklist-document-option {
+    font-size: 12px;
+}
+
+[data-portal-workflow^="berjalan"]:not([data-header-account="empty"]) .checklist-month-option {
+    width: 105px;
+}
+
+[data-portal-workflow]:not([data-header-account="empty"]) .checklist-option-input,
+[data-portal-workflow]:not([data-header-account="empty"]) .checklist-month-input,
+[data-portal-workflow]:not([data-header-account="empty"]) .checklist-option-label,
+[data-portal-workflow]:not([data-header-account="empty"]) .checklist-month-label {
+    cursor: pointer;
+}
+
+[data-portal-workflow^="berjalan"]:not([data-header-account="empty"]) .checklist-month-label {
+    font-size: 13px;
+}
+
+[data-portal-workflow]:not([data-header-account="empty"]) .debug-info {
+    font-size: 11px;
+    line-height: 1.2;
+    word-break: break-all;
+}
+
+[data-portal-workflow]:not([data-header-account="empty"]) #btnProses {
+    width: auto;
+}
+
+[data-portal-workflow^="ajuan"] .iframe-container {
+    height: 60vh;
+}
+
+[data-portal-workflow^="berjalan"] .iframe-container {
+    height: 50vh;
+}
+
+[data-portal-workflow]:not([data-header-account="empty"]) th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+}
+
+[data-portal-workflow]:not([data-header-account="empty"]) th.sortable:hover {
+    background-color: #e2e8f0 !important;
+}
+
+[data-portal-workflow]:not([data-header-account="empty"]) .sort-icon {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 11px;
+}
+
+[data-portal-workflow]:not([data-header-account="empty"]) #autofill {
+    font-size: 11px;
+}
+
+@media (min-width: 768px) {
+    [data-portal-workflow] .batas-lebar {
+        max-width: 250px;
+    }
+}
+
+@media (max-width: 767px) {
+    [data-portal-workflow] .batas-lebar {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .wide-container {
+        width: 100%;
+        margin: 0;
+        padding: 16px;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    [data-portal-workflow] header .header-inner {
+        width: 100% !important;
+        padding: 10px 12px !important;
+    }
+
+    [data-portal-workflow]:not([data-header-account="empty"]) #btnProses {
+        width: 100% !important;
+    }
+
+    [data-portal-workflow]:not([data-header-account="empty"]) .table-responsive table#tabelAntreanUtama,
+    [data-portal-workflow]:not([data-header-account="empty"]) .table-responsive #tabelAntreanBody,
+    [data-portal-workflow]:not([data-header-account="empty"]) .table-responsive #tabelAntreanBody tr,
+    [data-portal-workflow]:not([data-header-account="empty"]) .table-responsive #tabelAntreanBody td,
+    [data-portal-workflow][data-header-account="empty"] .table-responsive table,
+    [data-portal-workflow][data-header-account="empty"] .table-responsive tbody,
+    [data-portal-workflow][data-header-account="empty"] .table-responsive tr,
+    [data-portal-workflow][data-header-account="empty"] .table-responsive td {
+        display: block;
+        width: 100%;
+    }
+
+    [data-portal-workflow]:not([data-header-account="empty"]) .table-responsive thead,
+    [data-portal-workflow][data-header-account="empty"] .table-responsive thead {
+        display: none;
+    }
+
+    [data-portal-workflow]:not([data-header-account="empty"]) .table-responsive #tabelAntreanBody tr,
+    [data-portal-workflow][data-header-account="empty"] .table-responsive tr {
+        margin-bottom: 16px;
+        padding: 6px 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    }
+
+    [data-portal-workflow]:not([data-header-account="empty"]) .table-responsive #tabelAntreanBody td,
+    [data-portal-workflow][data-header-account="empty"] .table-responsive td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 8px;
+        border: none;
+        border-bottom: 1px solid #f1f5f9;
+        text-align: right;
+    }
+
+    [data-portal-workflow]:not([data-header-account="empty"]) .table-responsive #tabelAntreanBody td:last-child,
+    [data-portal-workflow][data-header-account="empty"] .table-responsive td:last-child {
+        border-bottom: none;
+    }
+
+    [data-portal-workflow]:not([data-header-account="empty"]) .table-responsive #tabelAntreanBody td::before,
+    [data-portal-workflow][data-header-account="empty"] .table-responsive td::before {
+        content: attr(data-label);
+        padding-right: 15px;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 700;
+        text-align: left;
+        text-transform: uppercase;
+    }
+
+    [data-portal-workflow]:not([data-header-account="empty"]) #autofill {
+        font-size: 8px;
+    }
 }
