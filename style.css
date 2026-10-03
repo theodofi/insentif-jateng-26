@@ -299,6 +299,10 @@ body {
     display: none;
 }
 
+#admin-mobile-profile {
+    display: none;
+}
+
 @media (max-width: 767px) {
     #mobile-admin-menu-toggle {
         display: inline-flex;
@@ -344,10 +348,51 @@ body {
     #admin-login-button {
         justify-content: center;
     }
+    #admin-account.is-authenticated #admin-login-button {
+        display: none;
+    }
+    #admin-account.is-authenticated #admin-mobile-profile {
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+        margin-bottom: 0.5rem;
+        padding: 0.625rem 0.75rem;
+        border: 1px solid #dbeafe;
+        border-radius: 0.75rem;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    #admin-mobile-profile-avatar {
+        display: grid;
+        flex: 0 0 2rem;
+        width: 2rem;
+        height: 2rem;
+        place-items: center;
+        overflow: hidden;
+        border-radius: 9999px;
+        color: #2563eb;
+        font-size: 1.5rem;
+    }
+    #admin-mobile-profile-avatar img {
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        object-fit: cover;
+    }
+    #admin-mobile-profile-email {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
     #admin-profile-menu {
         position: static;
         width: 100%;
         margin-top: 0.5rem;
+    }
+    #admin-profile-email {
+        display: none;
     }
     body.mobile-admin-menu-open {
         overflow: hidden;

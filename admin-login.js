@@ -3,6 +3,9 @@
     const loginButton = document.getElementById('admin-login-button');
     const profileMenu = document.getElementById('admin-profile-menu');
     const profileEmail = document.getElementById('admin-profile-email');
+    const mobileProfile = document.getElementById('admin-mobile-profile');
+    const mobileProfileAvatar = document.getElementById('admin-mobile-profile-avatar');
+    const mobileProfileEmail = document.getElementById('admin-mobile-profile-email');
     const logoutButton = document.getElementById('admin-logout-button');
     const mobileMenuToggle = document.getElementById('mobile-admin-menu-toggle');
     const mobileSidebar = document.getElementById('mobile-admin-sidebar');
@@ -57,6 +60,8 @@
         let session = window.portalApi.getAdminSession();
         const claims = session ? readCredentialClaims(session.credential) : {};
         profileMenu.hidden = true;
+        mobileProfile.hidden = true;
+        account.classList.remove('is-authenticated');
         loginButton.setAttribute('aria-expanded', 'false');
         if (session && (!Number.isFinite(Number(claims.exp)) || Number(claims.exp) <= Math.floor(Date.now() / 1000))) {
             window.portalApi.clearAdminSession();
@@ -98,6 +103,23 @@
         label.textContent = session.email;
         loginButton.append(label);
         profileEmail.textContent = session.email;
+        account.classList.add('is-authenticated');
+        mobileProfile.hidden = false;
+        mobileProfileEmail.textContent = session.email;
+        mobileProfileAvatar.replaceChildren();
+        if (picture) {
+            const mobileImage = document.createElement('img');
+            mobileImage.src = picture;
+            mobileImage.alt = '';
+            mobileImage.referrerPolicy = 'no-referrer';
+            mobileProfileAvatar.appendChild(mobileImage);
+        } else {
+            const mobileIcon = document.createElement('i');
+            mobileIcon.className = 'fa-solid fa-circle-user';
+            mobileIcon.setAttribute('aria-hidden', 'true');
+            mobileProfileAvatar.appendChild(mobileIcon);
+        }
+        profileMenu.hidden = !mobileViewport.matches;
         loginButton.setAttribute('aria-haspopup', 'menu');
         loginButton.setAttribute('aria-label', `Profil admin ${session.email}`);
     }
@@ -238,6 +260,10 @@
             void openLoginView();
             return;
         }
+        if (mobileViewport.matches) {
+            profileMenu.hidden = false;
+            return;
+        }
         profileMenu.hidden = !profileMenu.hidden;
         loginButton.setAttribute('aria-expanded', String(!profileMenu.hidden));
     });
@@ -253,7 +279,7 @@
     });
 
     document.addEventListener('click', event => {
-        if (!account.contains(event.target)) {
+        if (!mobileViewport.matches && !account.contains(event.target)) {
             profileMenu.hidden = true;
             loginButton.setAttribute('aria-expanded', 'false');
         }
@@ -271,7 +297,10 @@
                 setMobileSidebarOpen(false);
             }
         });
-        window.addEventListener('resize', () => setMobileSidebarOpen(false, false));
+        window.addEventListener('resize', () => {
+            setMobileSidebarOpen(false, false);
+            renderAccount();
+        });
     }
 
     window.addEventListener('pageshow', renderAccount);
