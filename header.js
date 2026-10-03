@@ -68,14 +68,14 @@
         ajuanLink.append(ajuanIcon, ajuanLabel);
 
         const berjalanLink = document.createElement('a');
-        berjalanLink.href = 'bulan-berjalan.html';
+        berjalanLink.href = document.body.dataset.headerBerjalanHref || 'berjalan-janjun.html';
         berjalanLink.setAttribute('role', 'menuitem');
         berjalanLink.className = 'flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700';
         const berjalanIcon = document.createElement('i');
         berjalanIcon.className = 'fa-solid fa-calendar-check w-4 text-center';
         berjalanIcon.setAttribute('aria-hidden', 'true');
         const berjalanLabel = document.createElement('span');
-        berjalanLabel.textContent = 'Panel Bulan Berjalan';
+        berjalanLabel.textContent = document.body.dataset.headerBerjalanLabel || 'Panel Bulan Berjalan';
         berjalanLink.append(berjalanIcon, berjalanLabel);
 
         const logout = document.createElement('button');

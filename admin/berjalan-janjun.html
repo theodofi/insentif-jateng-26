@@ -48,7 +48,7 @@
     }
   </style>
 </head>
-<body class="d-flex flex-column min-vh-100" data-portal-workflow="berjalan" data-header-eyebrow="BIMAS KRISTEN KANWIL KEMENAG PROV. JATENG" data-header-title="Portal Admin Bulan Berjalan Insentif">
+<body class="d-flex flex-column min-vh-100" data-portal-workflow="berjalanJanJun" data-header-eyebrow="BIMAS KRISTEN KANWIL KEMENAG PROV. JATENG" data-header-title="Portal Admin Bulan Berjalan Insentif">
 
   <div id="shared-header"></div>
 
@@ -267,7 +267,7 @@
         muatData();
         setInterval(pantauDataMasuk, 10000);
       }, { once: true });
-      if (window.portalApi.getAdminSession()) window.portalApi.initializeAdmin('berjalan');
+      if (window.portalApi.getAdminSession()) window.portalApi.initializeAdmin('berjalanJanJun');
     });
 
     const runAsync = (fn, ...args) => window.portalApi.adminCall(fn, args);

@@ -1,7 +1,8 @@
 const APPS_SCRIPT_ENDPOINTS = Object.freeze({
     ajuanJanJun: 'https://script.google.com/macros/s/AKfycbxBgTghuwIQoBqpDNJzAVDXRVUHQIXIl323Gs9eaAYSEDVbdzkJfUzStKjct18K_3A0wA/exec',
     ajuanJulDes: 'https://script.google.com/macros/s/AKfycbzCP3KmQOYMorQcYDkPo9diVoHaRzUgfhw_Jz5pAhba-MOnm3p9Ut39zn1sb1YLXRzFag/exec',
-    berjalan: 'https://script.google.com/macros/s/AKfycby9AImHXGYpzR5MYRVyugOvAbW1_l56JlTZtv6yG6dHLYeRcrS4riNxvxnrq9ZatW9s/exec'
+    berjalanJanJun: 'https://script.google.com/macros/s/AKfycby9AImHXGYpzR5MYRVyugOvAbW1_l56JlTZtv6yG6dHLYeRcrS4riNxvxnrq9ZatW9s/exec',
+    berjalanJulDes: 'https://script.google.com/macros/s/AKfycbxIog3m0lBVkVr2-Z_h5EYXvHE5-8aPu_JODf8C66CKgx97ddDrE4fBhkQ9ay0mveSS/exec'
 });
 
 const ADMIN_METHODS = new Set([
