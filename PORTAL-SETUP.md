@@ -23,7 +23,7 @@ The deployment URLs are configured in `netlify/functions/portal-api.js`. Update 
 
 ## Netlify
 
-Deploy the repository normally. Netlify detects the function in `netlify/functions/portal-api.js`; the `_headers` file applies CSP and browser security headers. The main portal links to the static public pages, and admin panels are available at `/admin/ajuan.html` and `/admin/bulan-berjalan.html`.
+Deploy the repository normally. Netlify detects the function in `netlify/functions/portal-api.js`; the `_headers` file applies CSP and browser security headers. The main portal links to the static public pages, and admin panels are available at `/admin/ajuan-janjun.html` and `/admin/bulan-berjalan.html`.
 
 The home-page Google sign-in checks the ID token against both Apps Script projects. Only after both APIs accept the account does the portal show the Google profile and panel links. The admin panels revalidate that token against their own allowlist before loading or changing data.
 
