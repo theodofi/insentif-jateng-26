@@ -15,6 +15,10 @@ const SEARCH_MAX_RESULTS = 30;
 const SEARCH_ROWS_CACHE_KEY = 'teacher_search_rows_v1';
 const SEARCH_ROWS_CACHE_TTL_SECONDS = 30;
 const SEARCH_ROWS_CACHE_MAX_BYTES = 90000;
+// Limit applies to a browser profile's stored random ID, not hardware identity.
+const SEARCHES_PER_DEVICE_PER_DAY = 3;
+const SEARCH_DAILY_QUOTA_PREFIX = 'search_limit_';
+const SEARCH_DAILY_CLEANUP_KEY = 'search_limit_cleanup_date';
 const CAPTCHA_TTL_SECONDS = 120;
 const CAPTCHA_MIN_SOLVE_MS = 1000; // jawaban yang masuk lebih cepat dianggap bot
 // Pembatasan global (Apps Script anonim tidak punya identitas klien).
@@ -28,7 +32,12 @@ function doGet(e) {
   try {
     if (params.action === 'captcha') {
       if (bumpCounter_('captcha') > RATE_LIMIT_CAPTCHA_PER_MINUTE) return jsonResponse_({ ok: false, error: 'rate_limited' });
-      return jsonResponse_(createCaptcha_());
+      if (!isValidDeviceId_(params.device)) return jsonResponse_({ ok: false, error: 'invalid_device' });
+      const remaining = getDailySearchesRemaining_(params.device);
+      if (remaining === 0) return jsonResponse_({ ok: false, error: 'daily_limit' });
+      const challenge = createCaptcha_(params.device);
+      challenge.remaining = remaining;
+      return jsonResponse_(challenge);
     }
     if (params.action === 'search') {
       if (readCounter_('fail') >= RATE_LIMIT_FAILED_CAPTCHA_PER_MINUTE ||
@@ -77,8 +86,69 @@ function readCounter_(name) {
 }
 
 
+function isValidDeviceId_(deviceId) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(deviceId || '');
+}
+
+
+function searchQuotaDate_() {
+  return Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyyMMdd');
+}
+
+
+function searchQuotaKey_(deviceId, date) {
+  return SEARCH_DAILY_QUOTA_PREFIX + date + '_' + hashDeviceId_(deviceId);
+}
+
+
+function hashDeviceId_(deviceId) {
+  const hash = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    deviceId,
+    Utilities.Charset.UTF_8
+  );
+  return Utilities.base64EncodeWebSafe(hash).replace(/=+$/, '');
+}
+
+
+function getDailySearchesRemaining_(deviceId) {
+  const date = searchQuotaDate_();
+  const used = Number(PropertiesService.getScriptProperties().getProperty(searchQuotaKey_(deviceId, date)) || 0);
+  return Math.max(0, SEARCHES_PER_DEVICE_PER_DAY - used);
+}
+
+
+function consumeDailySearch_(deviceId) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(5000);
+  try {
+    const properties = PropertiesService.getScriptProperties();
+    const today = searchQuotaDate_();
+    if (properties.getProperty(SEARCH_DAILY_CLEANUP_KEY) !== today) {
+      const allProperties = properties.getProperties();
+      Object.keys(allProperties).forEach(function (key) {
+        if (key.indexOf(SEARCH_DAILY_QUOTA_PREFIX) === 0 && key.indexOf(SEARCH_DAILY_QUOTA_PREFIX + today + '_') !== 0) {
+          properties.deleteProperty(key);
+        }
+      });
+      properties.setProperty(SEARCH_DAILY_CLEANUP_KEY, today);
+    }
+
+    const key = searchQuotaKey_(deviceId, today);
+    const used = Number(properties.getProperty(key) || 0);
+    if (used >= SEARCHES_PER_DEVICE_PER_DAY) return null;
+
+    const remaining = SEARCHES_PER_DEVICE_PER_DAY - used - 1;
+    properties.setProperty(key, String(used + 1));
+    return remaining;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
 // CAPTCHA matematika: jawaban hanya disimpan di server, klien hanya menerima gambar.
-function createCaptcha_() {
+function createCaptcha_(deviceId) {
   const first = Math.floor(Math.random() * 9) + 1;
   const second = Math.floor(Math.random() * 9) + 1;
   const subtract = Math.random() < 0.4 && first >= second;
@@ -88,7 +158,7 @@ function createCaptcha_() {
   const token = Utilities.getUuid();
   CacheService.getScriptCache().put(
     'captcha_' + token,
-    JSON.stringify({ a: String(answer), t: Date.now() }),
+    JSON.stringify({ a: String(answer), t: Date.now(), d: hashDeviceId_(deviceId) }),
     CAPTCHA_TTL_SECONDS
   );
 
@@ -139,7 +209,7 @@ function rand_(min, max) {
 
 // Token CAPTCHA sekali pakai: dihapus dari cache apa pun hasil jawabannya.
 // Mengembalikan jawaban yang terverifikasi, atau null jika gagal.
-function consumeCaptcha_(token, answer) {
+function consumeCaptcha_(token, answer, deviceId) {
   if (!/^[0-9a-f-]{36}$/.test(token || '')) return null;
   const lock = LockService.getScriptLock();
   lock.waitLock(5000);
@@ -152,6 +222,7 @@ function consumeCaptcha_(token, answer) {
 
     const entry = JSON.parse(stored);
     if (Date.now() - entry.t < CAPTCHA_MIN_SOLVE_MS) return null;
+    if (entry.d !== hashDeviceId_(deviceId)) return null;
     const given = String(answer || '').trim();
     return given === entry.a ? given : null;
   } finally {
@@ -208,13 +279,19 @@ function searchTeachers_(params) {
   const query = normalizeText_(params.q);
   const kabKota = normalizeText_(params.kab);
 
+  if (!isValidDeviceId_(params.device)) {
+    return { ok: false, error: 'invalid_device' };
+  }
   if ((!query && !kabKota) || query.length > SEARCH_MAX_QUERY_LENGTH || kabKota.length > 50) {
     return { ok: false, error: 'invalid_query' };
   }
-  if (consumeCaptcha_(params.token, params.answer) === null) {
+  if (consumeCaptcha_(params.token, params.answer, params.device) === null) {
     bumpCounter_('fail');
     return { ok: false, error: 'captcha_failed' };
   }
+
+  const remaining = consumeDailySearch_(params.device);
+  if (remaining === null) return { ok: false, error: 'daily_limit' };
 
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SEARCH_SHEET_NAME);
   if (!sheet) return { ok: false, error: 'server_error' };
@@ -238,5 +315,11 @@ function searchTeachers_(params) {
     }
   }
 
-  return { ok: true, total: total, results: results, truncated: total > results.length };
+  return {
+    ok: true,
+    total: total,
+    results: results,
+    truncated: total > results.length,
+    remaining: remaining
+  };
 }

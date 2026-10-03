@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // URL web app Apps Script (Deploy > Manage deployments), berakhiran /exec.
     const searchApiUrl = 'https://script.google.com/macros/s/AKfycbxq4ZIhzpZjOSiqNfNnT8kudjPdZCm4WBE33bjcAkP9JiqVDGLE7cCpQ_pjpSNJxNz0Xw/exec';
     const maxQueryLength = 100;
+    const deviceIdStorageKey = 'teacher-search-device-id-v1';
     const pageSize = 5;
     let currentTeachers = [];
     let currentPage = 1;
@@ -77,10 +78,40 @@ document.addEventListener('DOMContentLoaded', () => {
     kabKotaSelect.addEventListener('change', updateKabKotaControl);
     updateKabKotaControl();
 
+    function createDeviceId() {
+        const bytes = new Uint8Array(16);
+        window.crypto.getRandomValues(bytes);
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+        const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+        return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    }
+
+    function getDeviceId() {
+        let deviceId;
+        try {
+            deviceId = window.localStorage.getItem(deviceIdStorageKey);
+        } catch {
+            throw new Error('device_storage_unavailable');
+        }
+
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(deviceId || '')) {
+            return deviceId;
+        }
+
+        deviceId = createDeviceId();
+        try {
+            window.localStorage.setItem(deviceIdStorageKey, deviceId);
+        } catch {
+            throw new Error('device_storage_unavailable');
+        }
+        return deviceId;
+    }
+
     function requestSearchApi(params) {
         if (!searchApiUrl) return Promise.reject(new Error('not_configured'));
         const url = new URL(searchApiUrl);
-        Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+        Object.entries({ ...params, device: getDeviceId() }).forEach(([key, value]) => url.searchParams.set(key, value));
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => controller.abort(), 30000);
         return fetch(url, {
@@ -102,7 +133,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadCaptchaChallenge() {
         const data = await requestSearchApi({ action: 'captcha' });
-        if (typeof data.token !== 'string' || !String(data.image).startsWith('data:image/svg+xml;base64,')) {
+        if (typeof data.token !== 'string' ||
+            !Number.isInteger(data.remaining) ||
+            !String(data.image).startsWith('data:image/svg+xml;base64,')) {
             throw new Error('request_failed');
         }
         captchaToken = data.token;
@@ -111,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         captchaContainer.hidden = false;
         positionCaptchaSubmitButton();
         captchaAnswerInput.focus();
+        return data.remaining;
     }
 
     function hideCaptcha() {
@@ -135,6 +169,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return 'Layanan pencarian belum dikonfigurasi.';
             case 'rate_limited':
                 return 'Terlalu banyak permintaan. Coba lagi dalam beberapa saat.';
+            case 'daily_limit':
+                return 'Kuota pencarian hari ini sudah habis (maksimal 3 kali per hari). Coba lagi besok.';
+            case 'device_storage_unavailable':
+                return 'Pencarian memerlukan penyimpanan browser. Aktifkan penyimpanan situs lalu coba lagi.';
             case 'invalid_query':
                 return 'Masukkan nama guru atau pilih Kab/Kota.';
             default:
@@ -226,8 +264,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 resultsContainer.hidden = true;
                 currentTeachers = [];
                 searchStatus.textContent = 'Memuat verifikasi...';
-                await loadCaptchaChallenge();
-                searchStatus.textContent = 'Jawab pertanyaan verifikasi untuk melanjutkan pencarian.';
+                const remaining = await loadCaptchaChallenge();
+                searchStatus.textContent = `Jawab pertanyaan verifikasi untuk melanjutkan pencarian. Sisa hari ini: ${remaining}.`;
                 return;
             }
 
@@ -254,11 +292,11 @@ document.addEventListener('DOMContentLoaded', () => {
             })) : [];
             renderTeacherResults(results);
             if (!results.length) {
-                searchStatus.textContent = 'Data tidak ditemukan.';
+                searchStatus.textContent = `Data tidak ditemukan. Sisa pencarian hari ini: ${data.remaining}.`;
             } else if (data.truncated) {
-                searchStatus.textContent = `${data.total} data ditemukan, menampilkan ${results.length} pertama. Perjelas nama atau pilih Kab/Kota.`;
+                searchStatus.textContent = `${data.total} data ditemukan, menampilkan ${results.length} pertama. Perjelas nama atau pilih Kab/Kota. Sisa pencarian hari ini: ${data.remaining}.`;
             } else {
-                searchStatus.textContent = `${results.length} data ditemukan.`;
+                searchStatus.textContent = `${results.length} data ditemukan. Sisa pencarian hari ini: ${data.remaining}.`;
             }
         } catch (error) {
             if (error.message === 'captcha_failed') {
