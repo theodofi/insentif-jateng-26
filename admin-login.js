@@ -48,6 +48,7 @@
 
         loginButton.replaceChildren();
         loginButton.className = buttonClasses;
+        loginButton.removeAttribute('aria-label');
         if (!session) {
             const icon = document.createElement('i');
             icon.className = 'fa-solid fa-lock';
@@ -158,6 +159,8 @@
             });
             closeLoginView();
             renderAccount();
+            const workflow = document.body.dataset.portalWorkflow;
+            if (workflow) await window.portalApi.initializeAdmin(workflow);
         } catch (error) {
             loginMessage.textContent = window.portalApi.showApiError(error);
         }
@@ -222,6 +225,10 @@
     logoutButton.addEventListener('click', () => {
         window.portalApi.clearAdminSession();
         window.google?.accounts?.id?.disableAutoSelect();
+        if (document.body.dataset.portalWorkflow) {
+            window.location.assign('../index.html');
+            return;
+        }
         renderAccount();
     });
 
@@ -233,5 +240,6 @@
     });
 
     window.addEventListener('pageshow', renderAccount);
+    window.addEventListener('portal-admin-ready', renderAccount);
     renderAccount();
 })();

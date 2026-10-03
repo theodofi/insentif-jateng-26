@@ -15,7 +15,6 @@
     let authGate;
     let authMessage;
     let googleButton;
-    let userBadge;
     let identityScriptPromise;
 
     async function request(workflow, parameters, method) {
@@ -122,6 +121,7 @@
     }
 
     function clearAdminSession() {
+        adminCredential = undefined;
         try {
             window.sessionStorage.removeItem(adminSessionKey);
         } catch {
@@ -180,29 +180,6 @@
         return identityScriptPromise;
     }
 
-    function addAdminControls(email) {
-        if (userBadge) userBadge.remove();
-        const badge = document.createElement('div');
-        badge.style.cssText = 'position:fixed;right:.75rem;top:.75rem;z-index:1000;display:flex;align-items:center;gap:.5rem;padding:.4rem .65rem;border:1px solid #d1d5db;border-radius:.5rem;background:#fff;color:#374151;font:12px Inter,Arial,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.08)';
-        const identity = document.createElement('span');
-        identity.textContent = email;
-        const logout = document.createElement('button');
-        logout.type = 'button';
-        logout.textContent = 'Keluar';
-        logout.style.cssText = 'padding:.3rem .55rem;border:0;border-radius:.35rem;background:#e5e7eb;color:#111827;cursor:pointer';
-        logout.addEventListener('click', () => {
-            adminCredential = undefined;
-            clearAdminSession();
-            badge.remove();
-            userBadge = null;
-            window.google?.accounts?.id?.disableAutoSelect();
-            openAuthGate();
-        });
-        badge.append(identity, logout);
-        document.body.appendChild(badge);
-        userBadge = badge;
-    }
-
     async function acceptGoogleCredential(response) {
         if (!response?.credential || !authMessage) return;
         authMessage.textContent = 'Memverifikasi akun...';
@@ -216,7 +193,6 @@
             authMessage.textContent = '';
             authGate.hidden = true;
             authGate.style.display = 'none';
-            addAdminControls(result.email);
             window.dispatchEvent(new CustomEvent('portal-admin-ready', { detail: { email: result.email } }));
         } catch (error) {
             adminCredential = undefined;
@@ -271,7 +247,6 @@
                 }, 'POST');
                 adminCredential = session.credential;
                 saveAdminSession({ credential: session.credential, email: result.email });
-                addAdminControls(result.email);
                 window.dispatchEvent(new CustomEvent('portal-admin-ready', { detail: { email: result.email } }));
                 return;
             } catch (error) {

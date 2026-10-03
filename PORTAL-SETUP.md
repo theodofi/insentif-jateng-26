@@ -10,10 +10,12 @@ The public monitor pages and admin panels are static Netlify pages. The Apps Scr
 
 ## Apps Script deployments
 
-For each project in `apps-script/Ajuan/JanuariJuni/` and `apps-script/BulanBerjalan/JanuariJuni/`:
+Use the source files `apps-script/Ajuan/AjuanJanJun-Kode.gs` and `apps-script/BulanBerjalan/BBJanJun-Kode.gs` for the corresponding Google Apps Script projects. Their local filenames do not need to match the Apps Script editor filename.
 
-1. Update `Kode.gs` in the corresponding Apps Script project.
-2. In **Project Settings**, enable **Show "appsscript.json" manifest file**. Add `https://www.googleapis.com/auth/script.external_request` to the existing `oauthScopes` array in that project’s manifest. Preserve all existing scopes and other manifest settings.
+For **each** corresponding Apps Script project:
+
+1. Copy the contents of its source file into that project's `Kode.gs`.
+2. In **Project Settings**, enable **Show "appsscript.json" manifest file**. Add `https://www.googleapis.com/auth/script.external_request` to the existing `oauthScopes` array in that project's manifest. Preserve all existing scopes and other manifest settings.
 3. Save the manifest, then select and run `authorizeGoogleAuth()` once as the project owner. Approve the requested permission. An HTTP 400 result is expected because the helper deliberately sends an invalid token to Google.
 4. Deploy a new **Web app** version that executes as the project owner and is accessible to anyone. The public monitor API must be reachable without a Google login; every admin operation independently verifies the Google ID token and checks the existing admin email allowlist.
 

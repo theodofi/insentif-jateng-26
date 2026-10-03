@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="../portal-config.js" defer></script>
     <script src="../portal-api.js" defer></script>
+    <script src="../header.js" defer></script>
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1csgQfWYTIHnOzJ7U2ttT93TTv9DRn1zs">
     <link rel="shortcut icon" type="image/png" href="https://lh3.googleusercontent.com/d/1csgQfWYTIHnOzJ7U2ttT93TTv9DRn1zs">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,6 +14,8 @@
     <style>
       body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #1e293b; }
       .wide-container { max-width: 1350px; width: 95%; margin: 32px auto; background: #fff; padding: 40px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; }
+      .header-inner { max-width: 1350px; width: 95%; }
+      .logo-img { width: 52px; height: 52px; object-fit: contain; }
       @media (min-width: 768px) { .batas-lebar { max-width: 250px; }}
       @media (max-width: 767px) { .batas-lebar { max-width: 100%; }}
       @media (max-width: 768px) {
@@ -27,24 +30,9 @@
       }
     </style>
   </head>
-  <body class="d-flex flex-column min-vh-100" data-portal-workflow="berjalan">
+  <body class="d-flex flex-column min-vh-100" data-portal-workflow="berjalan" data-header-eyebrow="BIMAS KRISTEN KANWIL KEMENAG PROV. JATENG 2026" data-header-title="Portal Bulan Berjalan Insentif" data-header-account="empty">
 
-    <!-- HEADER UTAMA (STICKY TOP) -->
-    <header class="bg-white border-bottom shadow-sm w-100 sticky-top">
-      <div class="header-inner d-flex flex-column flex-md-row align-items-center justify-content-between gap-4 py-4 px-4 mx-auto" style="max-width: 1350px; width: 95%;">
-        <div class="d-flex align-items-center gap-3 text-start w-100 w-md-auto">
-          <img src="https://lh3.googleusercontent.com/d/1B_S0bYzahMWBUXKWPcOOKOm1ryvuvBz1" alt="Logo Kemenag" class="rounded-circle border p-1 bg-light shadow-sm flex-shrink-0" style="width: 52px; height: 52px; object-fit: contain;">
-          <div>
-            <h1 class="text-uppercase fw-bold text-primary mb-1" style="font-size: 10px; letter-spacing: 0.5px;">BIMAS KRISTEN KANWIL KEMENAG PROV. JATENG 2026</h1>
-            <h2 class="fw-bold text-dark mb-0 fs-3">Portal Bulan Berjalan Insentif</h2>
-          </div>
-        </div>
-        <!-- Jam & Tanggal -->
-        <div class="d-none d-md-block text-end text-secondary bg-light px-3 py-2 rounded-3 border small">
-          <span>⏰ </span><span id="live-time">Memuat waktu...</span>
-        </div>
-      </div>
-    </header>
+    <div id="shared-header"></div>
 
     <!-- KONTEN UTAMA -->
     <div class="wide-container">
@@ -151,17 +139,10 @@
       const batasBaris = 12;
 
       document.addEventListener("DOMContentLoaded", () => { 
-        muatData(); 
-        updateLiveClock(); 
-        setInterval(updateLiveClock, 1000); 
+        muatData();
       });
 
       const runAsync = (fn, ...args) => window.portalApi.publicCall(fn, args);
-
-      function updateLiveClock() {
-        let d = new Date();
-        el('live-time').innerText = `${d.toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'})} pukul ${String(d.getHours()).padStart(2,'0')}.${String(d.getMinutes()).padStart(2,'0')}.${String(d.getSeconds()).padStart(2,'0')}`;
-      }
 
       function muatData() {
         el("tabelBody").innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted fst-italic small">Sedang menarik data dari server...</td></tr>';
