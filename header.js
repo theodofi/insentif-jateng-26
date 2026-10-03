@@ -57,14 +57,14 @@
         email.className = 'truncate px-3 py-2 text-xs font-semibold text-gray-500';
 
         const ajuanLink = document.createElement('a');
-        ajuanLink.href = 'ajuan-janjun.html';
+        ajuanLink.href = document.body.dataset.headerAjuanHref || 'ajuan-janjun.html';
         ajuanLink.setAttribute('role', 'menuitem');
         ajuanLink.className = 'flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700';
         const ajuanIcon = document.createElement('i');
         ajuanIcon.className = 'fa-solid fa-file-circle-check w-4 text-center';
         ajuanIcon.setAttribute('aria-hidden', 'true');
         const ajuanLabel = document.createElement('span');
-        ajuanLabel.textContent = 'Panel Ajuan';
+        ajuanLabel.textContent = document.body.dataset.headerAjuanLabel || 'Panel Ajuan';
         ajuanLink.append(ajuanIcon, ajuanLabel);
 
         const berjalanLink = document.createElement('a');

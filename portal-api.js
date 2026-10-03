@@ -133,7 +133,7 @@
         if (typeof credential !== 'string' || !credential || credential.length > 8192) {
             throw new Error('invalid_admin_token');
         }
-        const results = await Promise.all(['ajuan', 'berjalan'].map(workflow =>
+        const results = await Promise.all(['ajuanJanJun', 'berjalan'].map(workflow =>
             request(workflow, { action: 'auth', credential }, 'POST')
         ));
         const emails = results.map(result => String(result.email || '').trim().toLowerCase());
@@ -235,7 +235,7 @@
     }
 
     async function initializeAdmin(workflow) {
-        if (!['ajuan', 'berjalan'].includes(workflow)) throw new Error('bad_request');
+        if (!['ajuanJanJun', 'ajuanJulDes', 'berjalan'].includes(workflow)) throw new Error('bad_request');
         activeWorkflow = workflow;
         const session = getAdminSession();
         let sessionError;

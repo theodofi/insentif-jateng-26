@@ -1,5 +1,6 @@
 const APPS_SCRIPT_ENDPOINTS = Object.freeze({
-    ajuan: 'https://script.google.com/macros/s/AKfycbxBgTghuwIQoBqpDNJzAVDXRVUHQIXIl323Gs9eaAYSEDVbdzkJfUzStKjct18K_3A0wA/exec',
+    ajuanJanJun: 'https://script.google.com/macros/s/AKfycbxBgTghuwIQoBqpDNJzAVDXRVUHQIXIl323Gs9eaAYSEDVbdzkJfUzStKjct18K_3A0wA/exec',
+    ajuanJulDes: 'https://script.google.com/macros/s/AKfycbzCP3KmQOYMorQcYDkPo9diVoHaRzUgfhw_Jz5pAhba-MOnm3p9Ut39zn1sb1YLXRzFag/exec',
     berjalan: 'https://script.google.com/macros/s/AKfycby9AImHXGYpzR5MYRVyugOvAbW1_l56JlTZtv6yG6dHLYeRcrS4riNxvxnrq9ZatW9s/exec'
 });
 
@@ -42,6 +43,9 @@ exports.handler = async function (event) {
     const endpoint = APPS_SCRIPT_ENDPOINTS[workflow];
 
     if (!endpoint) return jsonResponse(400, { ok: false, error: 'bad_request' });
+    if (endpoint.startsWith('REPLACE_')) {
+        return jsonResponse(503, { ok: false, error: 'api_not_configured' });
+    }
 
     let url = endpoint;
     const options = { method: event.httpMethod, redirect: 'follow' };
