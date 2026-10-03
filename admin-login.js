@@ -4,13 +4,30 @@
     const profileMenu = document.getElementById('admin-profile-menu');
     const profileEmail = document.getElementById('admin-profile-email');
     const logoutButton = document.getElementById('admin-logout-button');
+    const mobileMenuToggle = document.getElementById('mobile-admin-menu-toggle');
+    const mobileSidebar = document.getElementById('mobile-admin-sidebar');
+    const mobileSidebarClose = document.getElementById('mobile-admin-menu-close');
+    const mobileMenuBackdrop = document.getElementById('mobile-admin-menu-backdrop');
+    const mobileViewport = window.matchMedia('(max-width: 767px)');
     let loginView;
     let googleButton;
     let loginMessage;
     let identityScriptPromise;
     let googleIdentityInitialized = false;
 
-    const buttonClasses = 'inline-flex items-center gap-2 text-sm font-semibold text-blue-700 bg-blue-50 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500';
+    const buttonClasses = 'inline-flex flex-shrink-0 items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm';
+
+    function setMobileSidebarOpen(open, restoreFocus = true) {
+        if (!mobileSidebar || !mobileMenuToggle || !mobileMenuBackdrop) return;
+        const isOpen = open && mobileViewport.matches;
+        mobileSidebar.classList.toggle('is-open', isOpen);
+        mobileSidebar.setAttribute('aria-hidden', String(mobileViewport.matches && !isOpen));
+        mobileMenuToggle.setAttribute('aria-expanded', String(isOpen));
+        mobileMenuBackdrop.hidden = !isOpen;
+        document.body.classList.toggle('mobile-admin-menu-open', isOpen);
+        if (isOpen) mobileSidebarClose.focus();
+        else if (restoreFocus && mobileViewport.matches) mobileMenuToggle.focus();
+    }
 
     function readCredentialClaims(credential) {
         try {
@@ -54,7 +71,7 @@
             icon.className = 'fa-solid fa-lock';
             icon.setAttribute('aria-hidden', 'true');
             const label = document.createElement('span');
-            label.textContent = 'Login Admin';
+            label.textContent = 'Login';
             loginButton.append(icon, label);
             profileMenu.hidden = true;
             loginButton.setAttribute('aria-haspopup', 'dialog');
@@ -68,11 +85,11 @@
             image.src = picture;
             image.alt = '';
             image.referrerPolicy = 'no-referrer';
-            image.className = 'h-8 w-8 rounded-full border border-blue-200 object-cover';
+            image.className = 'h-7 w-7 rounded-full border border-blue-200 object-cover sm:h-8 sm:w-8';
             loginButton.appendChild(image);
         } else {
             const icon = document.createElement('i');
-            icon.className = 'fa-solid fa-circle-user text-2xl';
+            icon.className = 'fa-solid fa-circle-user text-xl sm:text-2xl';
             icon.setAttribute('aria-hidden', 'true');
             loginButton.appendChild(icon);
         }
@@ -90,7 +107,8 @@
         loginView.hidden = true;
         loginView.style.display = 'none';
         loginButton.setAttribute('aria-expanded', 'false');
-        loginButton.focus();
+        if (mobileViewport.matches && mobileMenuToggle) mobileMenuToggle.focus();
+        else loginButton.focus();
     }
 
     function createLoginView() {
@@ -208,6 +226,7 @@
     loginButton.addEventListener('click', () => {
         const session = window.portalApi.getAdminSession();
         if (!session) {
+            setMobileSidebarOpen(false, false);
             void openLoginView();
             return;
         }
@@ -215,6 +234,7 @@
         if (!Number.isFinite(Number(claims.exp)) || Number(claims.exp) <= Math.floor(Date.now() / 1000)) {
             window.portalApi.clearAdminSession();
             renderAccount();
+            setMobileSidebarOpen(false, false);
             void openLoginView();
             return;
         }
@@ -238,6 +258,21 @@
             loginButton.setAttribute('aria-expanded', 'false');
         }
     });
+
+    if (mobileMenuToggle && mobileSidebar && mobileSidebarClose && mobileMenuBackdrop) {
+        setMobileSidebarOpen(false, false);
+        mobileMenuToggle.addEventListener('click', () => {
+            setMobileSidebarOpen(!mobileSidebar.classList.contains('is-open'));
+        });
+        mobileSidebarClose.addEventListener('click', () => setMobileSidebarOpen(false));
+        mobileMenuBackdrop.addEventListener('click', () => setMobileSidebarOpen(false));
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && mobileSidebar.classList.contains('is-open')) {
+                setMobileSidebarOpen(false);
+            }
+        });
+        window.addEventListener('resize', () => setMobileSidebarOpen(false, false));
+    }
 
     window.addEventListener('pageshow', renderAccount);
     window.addEventListener('portal-admin-ready', renderAccount);

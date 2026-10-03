@@ -38,7 +38,7 @@
         loginButton.type = 'button';
         loginButton.setAttribute('aria-haspopup', 'dialog');
         loginButton.setAttribute('aria-expanded', 'false');
-        loginButton.className = 'inline-flex items-center gap-2 text-sm font-semibold text-blue-700 bg-blue-50 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500';
+        loginButton.className = 'inline-flex flex-shrink-0 items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm';
         const loginIcon = document.createElement('i');
         loginIcon.className = 'fa-solid fa-lock';
         loginIcon.setAttribute('aria-hidden', 'true');

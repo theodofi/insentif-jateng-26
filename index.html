@@ -25,44 +25,56 @@
 <body class="bg-slate-50 text-gray-800 flex flex-col min-h-screen">
 
   <!-- HEADER -->
-  <header class="sticky top-0 relative z-50 bg-white border-b border-gray-200 py-4 px-6 shadow-sm fade-in-up">
-    <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+  <header class="sticky top-0 relative z-50 bg-white border-b border-gray-200 py-4 px-6 shadow-sm">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-2 md:gap-4">
       
       <!-- TEMPAT LOGO -->
-      <div class="flex items-center gap-4">
+      <div class="flex min-w-0 items-center gap-3 md:gap-4">
         <img src="img/kemenag-logo.png" alt="Logo Kemenag" class="w-14 h-14 object-contain bg-gray-100 rounded-full p-1 border border-gray-200" id="logo-instansi">
-        <div>
+        <div class="min-w-0">
           <h1 class="text-xs font-bold tracking-wider text-blue-600 uppercase mb-1">Bimas Kristen Kanwil Kemenag Prov. Jateng 2026</h1>
           <h2 class="text-xl md:text-2xl font-bold text-gray-900 leading-tight">Portal Utama Insentif</h2>
         </div>
       </div>
 
-      <div class="relative z-50" id="admin-account">
-        <button id="admin-login-button" type="button" aria-haspopup="menu" aria-expanded="false" class="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 bg-blue-50 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <i class="fa-solid fa-lock" aria-hidden="true"></i>
-          <span>Login Admin</span>
-        </button>
-        <div id="admin-profile-menu" role="menu" hidden class="absolute right-0 mt-2 w-64 rounded-lg border border-gray-200 bg-white p-2 shadow-lg">
-          <p id="admin-profile-email" class="truncate px-3 py-2 text-xs font-semibold text-gray-500"></p>
-          <a role="menuitem" href="admin/ajuan-janjun.html" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
-            <i class="fa-solid fa-file-circle-check w-4 text-center" aria-hidden="true"></i>
-            <span>Panel Ajuan Januari-Juni</span>
-          </a>
-          <a role="menuitem" href="admin/ajuan-juldes.html" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
-            <i class="fa-solid fa-file-circle-check w-4 text-center" aria-hidden="true"></i>
-            <span>Panel Ajuan Juli-Desember</span>
-          </a>
-          <a role="menuitem" href="admin/berjalan-janjun.html" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700">
-            <i class="fa-solid fa-calendar-check w-4 text-center" aria-hidden="true"></i>
-            <span>Panel Bulan Berjalan Januari-Juni</span>
-          </a>
-          <a role="menuitem" href="admin/berjalan-juldes.html" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700">
-            <i class="fa-solid fa-calendar-check w-4 text-center" aria-hidden="true"></i>
-            <span>Panel Bulan Berjalan Juli-Desember</span>
-          </a>
-          <button id="admin-logout-button" type="button" role="menuitem" class="mt-1 w-full rounded-md px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50">Keluar</button>
+      <button id="mobile-admin-menu-toggle" type="button" aria-controls="mobile-admin-sidebar" aria-expanded="false" aria-label="Buka menu admin" class="md:hidden inline-flex flex-shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <i class="fa-solid fa-bars text-xl" aria-hidden="true"></i>
+      </button>
+      <div id="mobile-admin-menu-backdrop" hidden aria-hidden="true"></div>
+      <aside id="mobile-admin-sidebar" aria-label="Menu admin" aria-hidden="true">
+        <div id="mobile-admin-sidebar-header">
+          <span class="font-semibold text-gray-900">Menu Admin</span>
+          <button id="mobile-admin-menu-close" type="button" aria-label="Tutup menu admin" class="inline-flex items-center justify-center rounded-lg p-2 text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <i class="fa-solid fa-xmark text-xl" aria-hidden="true"></i>
+          </button>
         </div>
-      </div>
+        <div class="relative z-50" id="admin-account">
+          <button id="admin-login-button" type="button" aria-haspopup="menu" aria-expanded="false" class="inline-flex flex-shrink-0 items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+            <span>Login Admin</span>
+          </button>
+          <div id="admin-profile-menu" role="menu" hidden class="absolute right-0 mt-2 w-64 rounded-lg border border-gray-200 bg-white p-2 shadow-lg">
+            <p id="admin-profile-email" class="truncate px-3 py-2 text-xs font-semibold text-gray-500"></p>
+            <a role="menuitem" href="admin/ajuan-janjun.html" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
+              <i class="fa-solid fa-file-circle-check w-4 text-center" aria-hidden="true"></i>
+              <span>Panel Ajuan Januari-Juni</span>
+            </a>
+            <a role="menuitem" href="admin/ajuan-juldes.html" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
+              <i class="fa-solid fa-file-circle-check w-4 text-center" aria-hidden="true"></i>
+              <span>Panel Ajuan Juli-Desember</span>
+            </a>
+            <a role="menuitem" href="admin/berjalan-janjun.html" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700">
+              <i class="fa-solid fa-calendar-check w-4 text-center" aria-hidden="true"></i>
+              <span>Panel Bulan Berjalan Januari-Juni</span>
+            </a>
+            <a role="menuitem" href="admin/berjalan-juldes.html" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700">
+              <i class="fa-solid fa-calendar-check w-4 text-center" aria-hidden="true"></i>
+              <span>Panel Bulan Berjalan Juli-Desember</span>
+            </a>
+            <button id="admin-logout-button" type="button" role="menuitem" class="mt-1 w-full rounded-md px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50">Keluar</button>
+          </div>
+        </div>
+      </aside>
     </div>
   </header>
 
