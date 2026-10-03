@@ -186,7 +186,13 @@ function doGet(e) {
 function doPost(e) {
   const params = (e && e.parameter) || {};
   try {
-    const email = verifyAdminCredential_(params.credential);
+    let email;
+    try {
+      email = verifyAdminCredential_(params.credential);
+    } catch (error) {
+      Logger.log('Google ID token verification failed: ' + error);
+      return apiResponse_({ ok: false, error: 'auth_verification_failed' });
+    }
     if (!email) return apiResponse_({ ok: false, error: 'forbidden' });
     if (params.action === 'auth') return apiResponse_({ ok: true, email: email });
     if (params.action !== 'admin') return apiResponse_({ ok: false, error: 'bad_request' });
@@ -202,6 +208,16 @@ function doPost(e) {
     Logger.log('Admin API error: ' + error);
     return apiResponse_({ ok: false, error: 'server_error' });
   }
+}
+
+function authorizeGoogleAuth() {
+  const response = UrlFetchApp.fetch(
+    'https://oauth2.googleapis.com/tokeninfo?id_token=invalid',
+    { muteHttpExceptions: true }
+  );
+  const status = response.getResponseCode();
+  Logger.log('Google tokeninfo permission check returned HTTP ' + status);
+  return status;
 }
 
 function verifyAdminCredential_(credential) {

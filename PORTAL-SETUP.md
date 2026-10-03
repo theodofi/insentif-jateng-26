@@ -6,15 +6,16 @@ The public monitor pages and admin panels are static Netlify pages. The Apps Scr
 
 1. Create a Google OAuth 2.0 **Web application** client in Google Cloud.
 2. Add the production Netlify URL (and any preview origins you use) to its authorized JavaScript origins.
-3. Replace `REPLACE_WITH_GOOGLE_OAUTH_WEB_CLIENT_ID` in `portal-config.js` and in both Apps Script `Kode.gs` files with the same client ID. The client ID is public configuration, not a client secret.
+3. Ensure `portal-config.js` and both Apps Script `Kode.gs` files use the same OAuth Web Client ID. Replace any `REPLACE_WITH_GOOGLE_OAUTH_WEB_CLIENT_ID` placeholder. The client ID is public configuration, not a client secret.
 
 ## Apps Script deployments
 
 For each project in `apps-script/Ajuan/JanuariJuni/` and `apps-script/BulanBerjalan/JanuariJuni/`:
 
 1. Update `Kode.gs` in the corresponding Apps Script project.
-2. Deploy a new **Web app** version that executes as the project owner and is accessible to anyone. The public monitor API must be reachable without a Google login; every admin operation independently verifies the Google ID token and checks the existing admin email allowlist.
-3. Authorize the project’s Spreadsheet, Drive, Docs, and external-request permissions when prompted.
+2. In **Project Settings**, enable **Show "appsscript.json" manifest file**. Add `https://www.googleapis.com/auth/script.external_request` to the existing `oauthScopes` array in that project’s manifest. Preserve all existing scopes and other manifest settings.
+3. Save the manifest, then select and run `authorizeGoogleAuth()` once as the project owner. Approve the requested permission. An HTTP 400 result is expected because the helper deliberately sends an invalid token to Google.
+4. Deploy a new **Web app** version that executes as the project owner and is accessible to anyone. The public monitor API must be reachable without a Google login; every admin operation independently verifies the Google ID token and checks the existing admin email allowlist.
 
 The deployment URLs are configured in `netlify/functions/portal-api.js`. Update those constants if a deployment URL changes. Do not remove the email allowlist checks.
 

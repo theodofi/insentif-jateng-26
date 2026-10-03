@@ -45,8 +45,13 @@
 
         try {
             const response = await fetch(method === 'GET' ? url : target.toString(), options);
-            if (!response.ok) throw new Error('api_request_failed');
-            const payload = await response.json();
+            let payload;
+            try {
+                payload = await response.json();
+            } catch {
+                throw new Error('api_invalid_response');
+            }
+            if (!response.ok) throw new Error(payload?.error || 'api_request_failed');
             if (!payload || payload.ok !== true) {
                 throw new Error(payload?.error || 'api_request_failed');
             }
@@ -64,6 +69,11 @@
             api_not_configured: 'Konfigurasi API belum lengkap.',
             api_timeout: 'Server merespons terlalu lama. Silakan coba lagi.',
             forbidden: 'Akun Google ini tidak memiliki akses admin.',
+            auth_verification_failed: 'Apps Script tidak dapat menghubungi layanan verifikasi Google. Jalankan authorizeGoogleAuth() pada kedua project, izinkan akses eksternal, lalu deploy ulang.',
+            server_error: 'Apps Script mengalami kesalahan. Periksa riwayat Executions pada project Google Apps Script.',
+            upstream_unavailable: 'Netlify tidak dapat menghubungi Apps Script. Periksa URL deployment dan pastikan versi API terbaru sudah dipublikasikan.',
+            api_invalid_response: 'Server mengirim respons yang tidak valid. Periksa deployment fungsi Netlify dan Apps Script.',
+            api_request_failed: 'Permintaan API gagal. Periksa deployment Netlify dan Apps Script.',
             auth_not_configured: 'Client ID Google belum dikonfigurasi.',
             invalid_admin_token: 'Sesi Google tidak valid. Silakan masuk kembali.',
             identity_mismatch: 'Akun Google tidak diizinkan pada kedua panel admin.',
