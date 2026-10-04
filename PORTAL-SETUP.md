@@ -50,7 +50,7 @@ The proxy stops waiting for an Apps Script response after 25 seconds and returns
 
 The public views remain available at `/pantau/ajuan-janjun.html`, `/pantau/ajuan-juldes.html`, `/pantau/berjalan-janjun.html`, and `/pantau/berjalan-juldes.html`. Admin panels remain at `/admin/ajuan-janjun.html`, `/admin/ajuan-juldes.html`, `/admin/berjalan-janjun.html`, and `/admin/berjalan-juldes.html`.
 
-The home-page Google sign-in checks the ID token against the existing Ajuan Januari-Juni and Bulan Berjalan Apps Script projects. Only after both APIs accept the account does the portal show the Google profile and panel links. Each admin panel, including Ajuan Juli-Desember, revalidates that token against its own Apps Script allowlist before loading or changing data.
+The home-page Google sign-in checks the ID token against the Bulan Berjalan Januari-Juni Apps Script project before showing the Google profile and panel links. Each admin panel, including Ajuan Januari-Juni and Ajuan Juli-Desember, independently revalidates that token against its own Apps Script allowlist before loading or changing data.
 
 The verified Google ID token is held in `localStorage` so the user can switch among admin panels, including in separate tabs, without signing in again. Existing sessions in `sessionStorage` are migrated automatically. The token is removed when the user selects **Keluar** and is rejected by the backend after expiry.
 

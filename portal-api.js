@@ -78,7 +78,6 @@
             api_request_failed: 'Permintaan API gagal. Periksa deployment Netlify dan Apps Script.',
             auth_not_configured: 'Client ID Google belum dikonfigurasi.',
             invalid_admin_token: 'Sesi Google tidak valid. Silakan masuk kembali.',
-            identity_mismatch: 'Akun Google tidak diizinkan pada kedua panel admin.',
             session_storage_unavailable: 'Penyimpanan browser tidak tersedia. Izinkan penyimpanan situs lalu coba lagi.',
             bad_request: 'Permintaan tidak valid.'
         };
@@ -186,12 +185,10 @@
         if (typeof credential !== 'string' || !credential || credential.length > 8192) {
             throw new Error('invalid_admin_token');
         }
-        const results = await Promise.all(['ajuanJanJun', 'berjalanJanJun'].map(workflow =>
-            request(workflow, { action: 'auth', credential }, 'POST')
-        ));
-        const emails = results.map(result => String(result.email || '').trim().toLowerCase());
-        if (!emails[0] || emails[0] !== emails[1]) throw new Error('identity_mismatch');
-        return { email: results[0].email };
+        const result = await request('berjalanJanJun', { action: 'auth', credential }, 'POST');
+        const email = String(result.email || '').trim();
+        if (!email) throw new Error('api_invalid_response');
+        return { email };
     }
 
     function createAuthGate(workflow) {
