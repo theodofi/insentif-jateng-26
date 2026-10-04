@@ -297,10 +297,18 @@
         return 'Pencarian gagal di Apps Script. Periksa Executions, akses spreadsheet, dan nama tab Data Gabungan.';
       case 'upstream_timeout':
         return 'Layanan pencarian merespons terlalu lama. Periksa Executions pada project Apps Script.';
+      case 'upstream_unavailable':
+        return 'Netlify tidak dapat menghubungi Apps Script pencarian. Periksa deployment dan URL endpoint.';
+      case 'bad_request':
+        return 'Permintaan pencarian ditolak. Pastikan frontend dan Netlify Function sudah diperbarui.';
+      case 'invalid_query':
+        return 'Masukkan nama guru atau pilih Kab/Kota.';
+      case 'request_failed':
+        return 'Respons pencarian tidak valid. Periksa Netlify Function dan Apps Script.';
       case 'not_found':
         return 'Data tidak ditemukan.';
       default:
-        return 'Data guru gagal dimuat. Periksa koneksi, lalu coba lagi.';
+        return `Data guru gagal dimuat (${/^[a-z0-9_]+$/i.test(error.message) ? error.message : 'network_error'}). Periksa koneksi dan deployment, lalu coba lagi.`;
     }
   }
   async function loadCaptcha() {
