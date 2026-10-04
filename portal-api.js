@@ -72,13 +72,14 @@
             forbidden: 'Akun Google ini tidak memiliki akses admin.',
             auth_verification_failed: 'Apps Script tidak dapat menghubungi layanan verifikasi Google. Jalankan authorizeGoogleAuth() pada kedua project, izinkan akses eksternal, lalu deploy ulang.',
             server_error: 'Apps Script mengalami kesalahan. Periksa riwayat Executions pada project Google Apps Script.',
+            upstream_timeout: 'Apps Script merespons terlalu lama. Coba lagi; jika berulang, periksa riwayat Executions pada project Apps Script terkait.',
             upstream_unavailable: 'Netlify tidak dapat menghubungi Apps Script. Periksa URL deployment dan pastikan versi API terbaru sudah dipublikasikan.',
             api_invalid_response: 'Server mengirim respons yang tidak valid. Periksa deployment fungsi Netlify dan Apps Script.',
             api_request_failed: 'Permintaan API gagal. Periksa deployment Netlify dan Apps Script.',
             auth_not_configured: 'Client ID Google belum dikonfigurasi.',
             invalid_admin_token: 'Sesi Google tidak valid. Silakan masuk kembali.',
             identity_mismatch: 'Akun Google tidak diizinkan pada kedua panel admin.',
-            session_storage_unavailable: 'Penyimpanan sesi browser tidak tersedia. Izinkan penyimpanan sesi lalu coba lagi.',
+            session_storage_unavailable: 'Penyimpanan browser tidak tersedia. Izinkan penyimpanan situs lalu coba lagi.',
             bad_request: 'Permintaan tidak valid.'
         };
         return messages[error.message] || 'Gagal menghubungi server. Periksa koneksi lalu coba lagi.';
@@ -87,7 +88,14 @@
     function getAdminSession() {
         let stored;
         try {
-            stored = window.sessionStorage.getItem(adminSessionKey);
+            stored = window.localStorage.getItem(adminSessionKey);
+            if (!stored) {
+                stored = window.sessionStorage.getItem(adminSessionKey);
+                if (stored) {
+                    window.localStorage.setItem(adminSessionKey, stored);
+                    window.sessionStorage.removeItem(adminSessionKey);
+                }
+            }
         } catch {
             throw new Error('session_storage_unavailable');
         }
@@ -115,7 +123,8 @@
             )
         };
         try {
-            window.sessionStorage.setItem(adminSessionKey, JSON.stringify(savedSession));
+            window.localStorage.setItem(adminSessionKey, JSON.stringify(savedSession));
+            window.sessionStorage.removeItem(adminSessionKey);
         } catch {
             throw new Error('session_storage_unavailable');
         }
@@ -125,6 +134,7 @@
     function clearAdminSession() {
         adminCredential = undefined;
         try {
+            window.localStorage.removeItem(adminSessionKey);
             window.sessionStorage.removeItem(adminSessionKey);
         } catch {
             throw new Error('session_storage_unavailable');

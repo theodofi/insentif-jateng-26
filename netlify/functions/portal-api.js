@@ -72,8 +72,10 @@ exports.handler = async function (event) {
         return jsonResponse(405, { ok: false, error: 'method_not_allowed' });
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
     try {
-        const upstream = await fetch(url, options);
+        const upstream = await fetch(url, { ...options, signal: controller.signal });
         const responseText = await upstream.text();
         if (responseText.length > 2_000_000) {
             return jsonResponse(502, { ok: false, error: 'upstream_response_too_large' });
@@ -82,7 +84,13 @@ exports.handler = async function (event) {
         if (!payload || typeof payload.ok !== 'boolean') throw new Error('Invalid upstream response.');
         return jsonResponse(upstream.ok ? 200 : 502, payload);
     } catch (error) {
+        if (error.name === 'AbortError') {
+            console.error(`Apps Script request timed out for workflow ${workflow}.`);
+            return jsonResponse(504, { ok: false, error: 'upstream_timeout' });
+        }
         console.error('Apps Script proxy request failed:', error.message);
         return jsonResponse(502, { ok: false, error: 'upstream_unavailable' });
+    } finally {
+        clearTimeout(timeoutId);
     }
 };

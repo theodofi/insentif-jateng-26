@@ -46,11 +46,12 @@ The Juli-Desember public monitor and admin panel use the separate workflow `berj
 Install the frontend dependencies with `npm ci`, use `npm run dev` for the Vue development server, and use `npm run build` to produce `dist/`. Vite's development middleware and `public/_redirects` route the existing `/admin/*.html` and `/pantau/*.html` URLs to the Vue SPA, so separate static HTML pages are not needed. Netlify uses `netlify.toml` to publish `dist/` and deploy `netlify/functions/portal-api.js`; the redirects are limited to those app routes so Vite and other assets are not rewritten to HTML. `public/_headers` applies the browser security headers to the deployed SPA.
 
 For local testing through the Netlify function proxy, run the project with Netlify CLI (`netlify dev`) instead of calling Apps Script directly. A plain `npm run dev` serves the SPA but does not run Netlify Functions. Add `http://localhost:8888` to the Google OAuth authorized JavaScript origins if testing sign-in locally.
+The proxy stops waiting for an Apps Script response after 25 seconds and returns an `upstream_timeout` error; if this repeats, check the corresponding Apps Script project's **Executions** and verify its external-request authorization.
 
 The public views remain available at `/pantau/ajuan-janjun.html`, `/pantau/ajuan-juldes.html`, `/pantau/berjalan-janjun.html`, and `/pantau/berjalan-juldes.html`. Admin panels remain at `/admin/ajuan-janjun.html`, `/admin/ajuan-juldes.html`, `/admin/berjalan-janjun.html`, and `/admin/berjalan-juldes.html`.
 
 The home-page Google sign-in checks the ID token against the existing Ajuan Januari-Juni and Bulan Berjalan Apps Script projects. Only after both APIs accept the account does the portal show the Google profile and panel links. Each admin panel, including Ajuan Juli-Desember, revalidates that token against its own Apps Script allowlist before loading or changing data.
 
-The verified ID token is held in `sessionStorage` for the current browser tab so the user can open any admin panel without signing in again. It is removed when the user selects **Keluar** and is rejected by the backend after expiry.
+The verified Google ID token is held in `localStorage` so the user can switch among admin panels, including in separate tabs, without signing in again. Existing sessions in `sessionStorage` are migrated automatically. The token is removed when the user selects **Keluar** and is rejected by the backend after expiry.
 
 After configuring both Juli-Desember endpoints and deploying, check all public monitors, sign in with an allowlisted account, open each admin panel from the profile menu, and verify that non-allowlisted Google accounts are rejected before testing admin reads, status saves, and PDF generation.

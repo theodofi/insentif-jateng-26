@@ -19,18 +19,19 @@ const EMAIL_ADMIN = [
 
 const daftarBerkas = [
   { id: "cover", labelPendek: "Cover", labelPanjang: "Cover" },
-  { id: "biodata", labelPendek: "Biodata", labelPanjang: "Identitas Diri (Biodata)" },
-  { id: "permohonan", labelPendek: "Surat Permohonan", labelPanjang: "Surat Permohonan Kepada Kepala Kantor Wilayah Kementerian Agama Provinsi Jawa Tengah u.p. Pembimas Kristen (Tertanggal di awal tahun, hari kerja)" },
-  { id: "sk_pengangkatan", labelPendek: "Fotokopi Sah SK Pengangkatan", labelPanjang: "Fotokopi Sah SK Pengangkatan Sebagai Guru Bukan ASN Pendidikan Agama Kristen" },
+  { id: "biodata", labelPendek: "Biodata", labelPanjang: "Biodata Diri" },
+  { id: "permohonan", labelPendek: "Surat Permohonan" },
+  { id: "sk_pengangkatan", labelPendek: "Fotokopi Sah SK Pengangkatan", labelPanjang: "Fotokopi Sah SK Pengangkatan / Surat Tugas" },
   { id: "npsn", labelPendek: "NPSN", labelPanjang: "Fotokopi Sah Sertifikat NPSN / Surat Keterangan NPSN dari Kepala Satuan Pendidikan" },
   { id: "skpbm", labelPendek: "SKPBM", labelPanjang: "Fotokopi Sah SKPBM (Surat Keputusan Pembagian Tugas Belajar Mengajar)" },
   { id: "jadwal", labelPendek: "Jadwal Pembelajaran", labelPanjang: "Fotokopi Sah Jadwal Pembelajaran" },
   { id: "ijazah", labelPendek: "Ijazah Pendidikan", labelPanjang: "Fotokopi Sah Ijazah Pendidikan Terakhir (Minimal S1 linear dengan Pendidikan Agama Kristen dan Teologi)" },
-  { id: "pernyataan", labelPendek: "Surat Pernyataan", labelPanjang: "Surat Pernyataan belum memiliki Sertifikat Pendidik dan Guru Bukan ASN" },
+  { id: "pernyataan", labelPendek: "Surat Pernyataan belum menerima TPG dan Guru Bukan ASN" },
   { id: "ktp", labelPendek: "KTP", labelPanjang: "Fotokopi Kartu Tanda Penduduk (KTP)" },
   { id: "kk", labelPendek: "KK", labelPanjang: "Fotokopi Kartu Keluarga (KK)" },
   { id: "npwp", labelPendek: "NPWP", labelPanjang: "Fotokopi NPWP" },
-  { id: "rekening", labelPendek: "Fotokopi Buku Rekening", labelPanjang: "Fotokopi Buku Rekening" }
+  { id: "rekening", labelPendek: "Fotokopi Buku Rekening", labelPanjang: "Fotokopi Buku Rekening" },
+  { id: "simpatika", labelPendek: "Simpatika / Emis", labelPanjang: "Print Out Simpatika / Emis"}
 ];
 
 // ==========================================
