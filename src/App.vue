@@ -43,9 +43,17 @@
   const menuOpen = ref(false);
   const profileOpen = ref(false);
   const toastMessage = ref('');
+  const profileImageFailed = ref(false);
   let toastTimer;
   const pageTitle = computed(() => route.meta.title || 'Portal Insentif');
-  const sessionInitial = computed(() => session.value?.email?.charAt(0).toUpperCase() || 'A');
+  const sessionInitial = computed(() =>
+    session.value?.name?.charAt(0).toUpperCase() ||
+    session.value?.email?.charAt(0).toUpperCase() ||
+    'A'
+  );
+  watch(() => session.value?.picture, () => {
+    profileImageFailed.value = false;
+  });
   function refreshSession() {
     try {
       session.value = portalApi.getAdminSession();
@@ -76,7 +84,7 @@
       loginOpen.value = false;
       loginBusy.value = false;
       loginError.value = '';
-      showToast(`Berhasil masuk sebagai ${event.detail.email}`);
+      showToast(`Berhasil masuk sebagai ${session.value?.name || event.detail.email}`);
     }
   }
   function handlePortalToast(event) {
@@ -102,7 +110,7 @@
           });
           session.value = saved;
           loginOpen.value = false;
-          showToast(`Berhasil masuk sebagai ${result.email}`);
+          showToast(`Berhasil masuk sebagai ${saved.name || result.email}`);
         } catch (error) {
           loginError.value = portalApi.showApiError(error);
         } finally {
@@ -168,13 +176,24 @@
               <i class="fa-solid fa-lock" aria-hidden="true"></i> {{ route.path === '/' ? 'Login' : 'Login Admin' }}
             </button>
           <div v-else class="relative">
-            <button type="button" class="flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-800" aria-haspopup="menu" :aria-expanded="profileOpen" @click="profileOpen = !profileOpen">
-                <span class="flex h-7 w-7 items-center justify-center rounded-full bg-blue-700 text-xs text-white">{{ sessionInitial }}</span>
-                <span class="portal-account-email truncate">{{ session.email }}</span>
+            <button type="button" class="flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-800" aria-haspopup="menu" :aria-expanded="profileOpen" :aria-label="`Profil admin ${session.name || session.email}`" @click="profileOpen = !profileOpen">
+                <img v-if="session.picture && !profileImageFailed" :src="session.picture" :alt="`${session.name || session.email} profile photo`" referrerpolicy="no-referrer" class="h-8 w-8 rounded-full border border-blue-200 object-cover" @error="profileImageFailed = true">
+                <span v-else class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-700 text-xs text-white">{{ sessionInitial }}</span>
+                <span class="min-w-0 text-left">
+                  <span v-if="session.name" class="portal-account-name block truncate">{{ session.name }}</span>
+                  <span class="portal-account-email block truncate text-xs">{{ session.email }}</span>
+                </span>
                 <i class="fa-solid fa-chevron-down text-xs"></i>
               </button>
             <div v-if="profileOpen" class="absolute right-0 z-50 mt-2 w-72 rounded-xl border border-gray-200 bg-white p-2 shadow-xl" role="menu">
-              <p class="truncate px-3 py-2 text-xs font-semibold text-gray-500">{{ session.email }}</p>
+              <div class="flex items-center gap-3 px-3 py-2">
+                <img v-if="session.picture && !profileImageFailed" :src="session.picture" :alt="`${session.name || session.email} profile photo`" referrerpolicy="no-referrer" class="h-10 w-10 rounded-full border border-blue-200 object-cover" @error="profileImageFailed = true">
+                <span v-else class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-700 font-semibold text-white">{{ sessionInitial }}</span>
+                <div class="min-w-0">
+                  <p v-if="session.name" class="truncate text-sm font-semibold text-gray-800">{{ session.name }}</p>
+                  <p class="truncate text-xs font-medium text-gray-500">{{ session.email }}</p>
+                </div>
+              </div>
               <RouterLink v-for="link in adminLinks" :key="link.to" :to="link.to" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-blue-50" role="menuitem">
                 <i :class="link.icon" class="w-4 text-center text-blue-700"></i>{{ link.label }}
               </RouterLink>
@@ -190,8 +209,12 @@
           <button class="rounded-lg p-2 text-gray-600 hover:bg-gray-100" aria-label="Tutup menu admin" @click="menuOpen = false"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div v-if="session" class="mb-4 flex items-center gap-3 rounded-xl bg-blue-50 p-3">
-          <span class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-700 font-semibold text-white">{{ sessionInitial }}</span>
-          <span class="truncate text-sm font-semibold text-gray-800">{{ session.email }}</span>
+          <img v-if="session.picture && !profileImageFailed" :src="session.picture" :alt="`${session.name || session.email} profile photo`" referrerpolicy="no-referrer" class="h-10 w-10 shrink-0 rounded-full border border-blue-200 object-cover" @error="profileImageFailed = true">
+          <span v-else class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-700 font-semibold text-white">{{ sessionInitial }}</span>
+          <span class="min-w-0">
+            <span v-if="session.name" class="block truncate text-sm font-semibold text-gray-800">{{ session.name }}</span>
+            <span class="block truncate text-xs text-gray-600">{{ session.email }}</span>
+          </span>
         </div>
         <button v-if="!session" type="button" class="mb-3 w-full rounded-lg bg-blue-700 px-4 py-3 text-left font-semibold text-white" @click="openLogin">
             <i class="fa-solid fa-lock mr-2"></i>Login Admin
@@ -217,7 +240,7 @@
       <p class="mb-0 text-xs">Dikembangkan oleh <a href="https://github.com/theodofi" target="_blank" rel="noopener noreferrer">@theodofi</a></p>
     </footer>
     <Transition name="fade">
-      <div v-if="toastMessage" class="portal-toast fixed bottom-5 left-1/2 -translate-x-1/2 rounded-lg bg-gray-900 px-4 py-3 text-sm font-medium text-white shadow-lg" role="status">{{ toastMessage }}</div>
+      <div v-if="toastMessage" class="portal-toast fixed bottom-5 right-5 rounded-lg bg-gray-900 px-4 py-3 text-sm font-medium text-white shadow-lg" role="status">{{ toastMessage }}</div>
     </Transition>
     <div v-if="loginOpen" class="portal-login-overlay fixed inset-0 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="login-title" @click.self="loginOpen = false">
       <section class="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl md:p-8">
@@ -272,6 +295,9 @@
     padding: 1rem;
   }
   .portal-account-email {
+    max-width: 12rem;
+  }
+  .portal-account-name {
     max-width: 12rem;
   }
   .portal-menu-backdrop {

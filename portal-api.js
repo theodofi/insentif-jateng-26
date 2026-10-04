@@ -85,6 +85,36 @@
         return messages[error.message] || 'Gagal menghubungi server. Periksa koneksi lalu coba lagi.';
     }
 
+    function safeProfilePicture(value) {
+        try {
+            const url = new URL(value);
+            if (url.protocol === 'https:' &&
+                (url.hostname === 'googleusercontent.com' || url.hostname.endsWith('.googleusercontent.com'))) {
+                return url.href;
+            }
+        } catch {
+            return '';
+        }
+        return '';
+    }
+
+    function readGoogleProfile(credential) {
+        try {
+            const encodedPayload = credential.split('.')[1];
+            if (!encodedPayload) return { name: '', picture: '' };
+            let base64 = encodedPayload.replace(/-/g, '+').replace(/_/g, '/');
+            base64 += '='.repeat((4 - base64.length % 4) % 4);
+            const bytes = Uint8Array.from(window.atob(base64), character => character.charCodeAt(0));
+            const claims = JSON.parse(new TextDecoder().decode(bytes));
+            return {
+                name: typeof claims.name === 'string' ? claims.name.trim() : '',
+                picture: safeProfilePicture(claims.picture)
+            };
+        } catch {
+            return { name: '', picture: '' };
+        }
+    }
+
     function getAdminSession() {
         let stored;
         try {
@@ -103,7 +133,13 @@
         try {
             const session = JSON.parse(stored);
             if (session && typeof session.credential === 'string' && typeof session.email === 'string') {
-                return session;
+                const profile = readGoogleProfile(session.credential);
+                return {
+                    ...session,
+                    name: typeof session.name === 'string' && session.name.trim() ?
+                        session.name.trim() : profile.name,
+                    picture: safeProfilePicture(session.picture) || profile.picture
+                };
             }
             clearAdminSession();
             return null;
@@ -115,12 +151,17 @@
 
     function saveAdminSession(session) {
         const previous = getAdminSession();
+        const profile = readGoogleProfile(session.credential);
+        const sameCredential = previous?.credential === session.credential;
         const savedSession = {
             credential: session.credential,
             email: session.email,
-            picture: session.picture || (
-                previous?.credential === session.credential ? previous.picture : ''
-            )
+            name: profile.name || (
+                typeof session.name === 'string' ? session.name.trim() : ''
+            ) || (sameCredential ? previous.name || '' : ''),
+            picture: safeProfilePicture(session.picture) ||
+                (sameCredential ? safeProfilePicture(previous.picture) : '') ||
+                profile.picture
         };
         try {
             window.localStorage.setItem(adminSessionKey, JSON.stringify(savedSession));
