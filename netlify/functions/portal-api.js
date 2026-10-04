@@ -74,8 +74,32 @@ exports.handler = async function (event) {
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 25000);
+    let phase = 'Apps Script request';
     try {
-        const upstream = await fetch(url, { ...options, signal: controller.signal });
+        let upstream = await fetch(url, {
+            ...options,
+            redirect: 'manual',
+            signal: controller.signal
+        });
+        if ([301, 302, 303, 307, 308].includes(upstream.status)) {
+            const location = upstream.headers.get('location');
+            if (!location) throw new Error('Apps Script redirect has no location.');
+            const redirectUrl = new URL(location, url);
+            if (redirectUrl.protocol !== 'https:' ||
+                redirectUrl.hostname !== 'script.googleusercontent.com') {
+                throw new Error('Apps Script returned an untrusted redirect.');
+            }
+            phase = 'Apps Script response redirect';
+            const redirectMethod = [301, 302, 303].includes(upstream.status)
+                ? 'GET'
+                : event.httpMethod;
+            upstream = await fetch(redirectUrl, {
+                method: redirectMethod,
+                redirect: 'manual',
+                signal: controller.signal
+            });
+        }
+        phase = 'Apps Script response body';
         const responseText = await upstream.text();
         if (responseText.length > 2_000_000) {
             return jsonResponse(502, { ok: false, error: 'upstream_response_too_large' });
@@ -85,7 +109,7 @@ exports.handler = async function (event) {
         return jsonResponse(upstream.ok ? 200 : 502, payload);
     } catch (error) {
         if (error.name === 'AbortError') {
-            console.error(`Apps Script request timed out for workflow ${workflow}.`);
+            console.error(`Apps Script request timed out for workflow ${workflow} during ${phase}.`);
             return jsonResponse(504, { ok: false, error: 'upstream_timeout' });
         }
         console.error('Apps Script proxy request failed:', error.message);
