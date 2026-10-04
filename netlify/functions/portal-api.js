@@ -62,15 +62,20 @@ exports.handler = async function (event) {
         const parameters = postParameters;
         const action = parameters.get('action');
         if (workflow === 'teacherSearch') {
-            const query = parameters.get('q') || '';
-            const region = parameters.get('kab') || '';
-            if (action !== 'admin-search' ||
-                !parameters.get('credential') ||
-                parameters.get('credential').length > 8192 ||
-                query.length > 100 ||
-                region.length > 50 ||
-                (!query.trim() && !region.trim())) {
+            const credential = parameters.get('credential');
+            if (!['admin-search', 'admin-summary'].includes(action) ||
+                !credential ||
+                credential.length > 8192) {
                 return jsonResponse(400, { ok: false, error: 'bad_request' });
+            }
+            if (action === 'admin-search') {
+                const query = parameters.get('q') || '';
+                const region = parameters.get('kab') || '';
+                if (query.length > 100 ||
+                    region.length > 50 ||
+                    (!query.trim() && !region.trim())) {
+                    return jsonResponse(400, { ok: false, error: 'bad_request' });
+                }
             }
             options.headers = { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' };
             options.body = rawBody;

@@ -14,6 +14,11 @@
   import logoUrl from './assets/kemenag-logo.png';
   import portalApi from './services/api.js';
   const adminLinks = [{
+      to: '/',
+      label: 'Beranda',
+      icon: 'fa-solid fa-home'
+    },
+    {
       to: '/admin/ajuan-janjun.html',
       label: 'Panel Ajuan Januari-Juni',
       icon: 'fa-solid fa-file-circle-check'

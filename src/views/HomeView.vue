@@ -151,6 +151,9 @@
   const isError = ref(false);
   const loading = ref(false);
   const isAdmin = ref(false);
+  const adminSummary = ref(null);
+  const adminSummaryLoading = ref(false);
+  const adminSummaryError = ref('');
   const teachers = ref([]);
   const currentPage = ref(1);
   const pageSize = 5;
@@ -163,12 +166,17 @@
   }
   function syncAdminSession() {
     try {
+      const wasAdmin = isAdmin.value;
       isAdmin.value = Boolean(portalApi.getAdminSession()?.credential);
       if (isAdmin.value) {
         captchaToken.value = '';
         captchaImage.value = '';
         captchaAnswer.value = '';
         remaining.value = null;
+        if (!wasAdmin || !adminSummary.value) void loadAdminSummary();
+      } else if (wasAdmin) {
+        adminSummary.value = null;
+        adminSummaryError.value = '';
       }
     } catch (error) {
       isAdmin.value = false;
@@ -236,7 +244,7 @@
       window.clearTimeout(timeoutId);
     }
   }
-  async function requestAdminSearchApi(params, credential) {
+  async function requestAdminSearchApi(action, params, credential) {
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), 30000);
     try {
@@ -247,10 +255,9 @@
         },
         body: new URLSearchParams({
           workflow: 'teacherSearch',
-          action: 'admin-search',
           credential,
-          q: params.q,
-          kab: params.kab
+          action,
+          ...params
         }),
         cache: 'no-store',
         credentials: 'omit',
@@ -272,6 +279,28 @@
       throw error;
     } finally {
       window.clearTimeout(timeoutId);
+    }
+  }
+  async function loadAdminSummary() {
+    if (adminSummaryLoading.value) return;
+    adminSummaryLoading.value = true;
+    adminSummaryError.value = '';
+    try {
+      const session = portalApi.getAdminSession();
+      if (!session?.credential) return;
+      const data = await requestAdminSearchApi('admin-summary', {}, session.credential);
+      if (!Number.isInteger(data.teacherCount) || data.teacherCount < 0 ||
+        !Number.isInteger(data.kabKotaCount) || data.kabKotaCount < 0) {
+        throw new Error('request_failed');
+      }
+      adminSummary.value = {
+        teacherCount: data.teacherCount,
+        kabKotaCount: data.kabKotaCount
+      };
+    } catch (error) {
+      adminSummaryError.value = describeError(error);
+    } finally {
+      adminSummaryLoading.value = false;
     }
   }
   function describeError(error) {
@@ -343,7 +372,7 @@
       const session = isAdmin.value ? portalApi.getAdminSession() : null;
       if (session?.credential) {
         status.value = 'Mencari data guru...';
-        const data = await requestAdminSearchApi({
+        const data = await requestAdminSearchApi('admin-search', {
           q: normalizedQuery,
           kab: region.value
         }, session.credential);
@@ -430,6 +459,36 @@
 
 <template>
   <div class="home-page">
+    <section v-if="isAdmin" class="mb-8 rounded-xl border border-blue-200 bg-white p-6 shadow-sm md:p-8" aria-labelledby="admin-summary-heading">
+      <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 id="admin-summary-heading" class="mb-1 text-xl font-bold text-gray-800">Ringkasan Data Insentif</h2>
+          <p class="mb-0 text-sm text-gray-500">Jumlah penerima terdaftar dan Kab/Kota yang berpartisipasi.</p>
+        </div>
+        <button type="button" class="btn-outline rounded-md px-3 py-2 text-sm" :disabled="adminSummaryLoading" @click="loadAdminSummary">
+          <i class="fa-solid mr-1.5" :class="adminSummaryLoading ? 'fa-spinner fa-spin' : 'fa-rotate'"></i>
+          Muat ulang
+        </button>
+      </div>
+      <p v-if="adminSummaryError" class="mb-0 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{{ adminSummaryError }}</p>
+      <div v-else-if="adminSummaryLoading && !adminSummary" class="py-4 text-center text-sm text-gray-500" role="status">Memuat ringkasan...</div>
+      <div v-else-if="adminSummary" class="grid gap-4 sm:grid-cols-2">
+        <div class="flex items-center gap-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
+          <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700"><i class="fa-solid fa-user-group text-lg" aria-hidden="true"></i></span>
+          <div>
+            <p class="mb-1 text-sm font-medium text-gray-600">Guru dan Tendik terdaftar</p>
+            <p class="mb-0 text-2xl font-bold text-blue-800">{{ adminSummary.teacherCount.toLocaleString('id-ID') }}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 rounded-xl border border-green-100 bg-green-50 p-4">
+          <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700"><i class="fa-solid fa-map-location-dot text-lg" aria-hidden="true"></i></span>
+          <div>
+            <p class="mb-1 text-sm font-medium text-gray-600">Kab/Kota berpartisipasi</p>
+            <p class="mb-0 text-2xl font-bold text-green-800">{{ adminSummary.kabKotaCount.toLocaleString('id-ID') }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
     <section class="home-general-section card-modern bg-white p-6 md:p-8 rounded-xl border border-gray-200 fade-in-up delay-1 mb-8">
       <div class="home-general-heading text-center mb-8">
         <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 mb-3">

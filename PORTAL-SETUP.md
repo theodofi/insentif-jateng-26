@@ -60,4 +60,6 @@ After configuring both Juli-Desember endpoints and deploying, check all public m
 
 The public teacher search keeps its CAPTCHA and three-search daily limit. Admin searches bypass that daily quota and CAPTCHA only after the teacher-search Apps Script verifies the Google ID token and its email against `SEARCH_ADMIN_EMAILS` in `apps-script/Data Insentif/Search.gs`. Admin requests are sent through the Netlify function so the ID token is carried in a POST body rather than a URL.
 
+When an admin is signed in on the home page, an admin-only summary shows the number of non-empty teacher records and distinct Kab/Kota values from the same `Data Gabungan` search rows. The summary request uses the same server-side Google ID token verification as admin search.
+
 After updating `Search.gs`, deploy a new version of the teacher-search Apps Script web app. Its Apps Script project must allow external requests: add `https://www.googleapis.com/auth/script.external_request` to `oauthScopes`, run `authorizeSearchGoogleAuth()` once, approve the scope as the owner, and deploy the new version. Confirm the search deployment URL in `TEACHER_SEARCH_ENDPOINT` in `netlify/functions/portal-api.js`. Deploy Netlify after updating either endpoint or frontend code. The Apps Script also keeps its global per-minute abuse rate limit for admin searches.

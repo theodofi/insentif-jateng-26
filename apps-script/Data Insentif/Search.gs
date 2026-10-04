@@ -61,7 +61,9 @@ function doGet(e) {
 
 function doPost(e) {
   const params = (e && e.parameter) || {};
-  if (params.action !== 'admin-search') return jsonResponse_({ ok: false, error: 'bad_request' });
+  if (!['admin-search', 'admin-summary'].includes(params.action)) {
+    return jsonResponse_({ ok: false, error: 'bad_request' });
+  }
 
   let authorized;
   try {
@@ -75,6 +77,9 @@ function doPost(e) {
   try {
     if (bumpCounter_('search') > RATE_LIMIT_SEARCH_PER_MINUTE) {
       return jsonResponse_({ ok: false, error: 'rate_limited' });
+    }
+    if (params.action === 'admin-summary') {
+      return jsonResponse_(getTeacherSummary_());
     }
     return jsonResponse_(searchTeachers_(params, true));
   } catch (error) {
@@ -289,6 +294,21 @@ function consumeCaptcha_(token, answer, deviceId) {
 
 function normalizeText_(value) {
   return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function getTeacherSummary_() {
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SEARCH_SHEET_NAME);
+  if (!sheet) throw new Error('Teacher search sheet not found.');
+
+  const teachers = getSearchRows_(sheet).filter(row => row[0]);
+  const regions = new Set(
+    teachers.map(row => normalizeText_(row[2]).replace(/[^a-z0-9]/g, '')).filter(Boolean)
+  );
+  return {
+    ok: true,
+    teacherCount: teachers.length,
+    kabKotaCount: regions.size
+  };
 }
 
 
