@@ -4,6 +4,7 @@ const APPS_SCRIPT_ENDPOINTS = Object.freeze({
     berjalanJanJun: 'https://script.google.com/macros/s/AKfycby9AImHXGYpzR5MYRVyugOvAbW1_l56JlTZtv6yG6dHLYeRcrS4riNxvxnrq9ZatW9s/exec',
     berjalanJulDes: 'https://script.google.com/macros/s/AKfycbxIog3m0lBVkVr2-Z_h5EYXvHE5-8aPu_JODf8C66CKgx97ddDrE4fBhkQ9ay0mveSS/exec'
 });
+const TEACHER_SEARCH_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxq4ZIhzpZjOSiqNfNnT8kudjPdZCm4WBE33bjcAkP9JiqVDGLE7cCpQ_pjpSNJxNz0Xw/exec';
 
 const ADMIN_METHODS = new Set([
     'ambilDataAntreanAdmin',
@@ -41,7 +42,9 @@ exports.handler = async function (event) {
         : event.httpMethod === 'POST'
             ? postParameters.get('workflow')
             : null;
-    const endpoint = APPS_SCRIPT_ENDPOINTS[workflow];
+    const endpoint = workflow === 'teacherSearch'
+        ? TEACHER_SEARCH_ENDPOINT
+        : APPS_SCRIPT_ENDPOINTS[workflow];
 
     if (!endpoint) return jsonResponse(400, { ok: false, error: 'bad_request' });
     if (endpoint.startsWith('REPLACE_')) {
@@ -58,6 +61,18 @@ exports.handler = async function (event) {
     } else if (event.httpMethod === 'POST') {
         const parameters = postParameters;
         const action = parameters.get('action');
+        if (workflow === 'teacherSearch') {
+            if (action !== 'admin-search' ||
+                !parameters.get('credential') ||
+                parameters.get('credential').length > 8192 ||
+                !parameters.get('q') ||
+                parameters.get('q').length > 100 ||
+                (parameters.get('kab') || '').length > 50) {
+                return jsonResponse(400, { ok: false, error: 'bad_request' });
+            }
+            options.headers = { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' };
+            options.body = rawBody;
+        } else {
         if (action === 'admin' && !ADMIN_METHODS.has(parameters.get('method'))) {
             return jsonResponse(400, { ok: false, error: 'bad_request' });
         }
@@ -68,6 +83,7 @@ exports.handler = async function (event) {
         }
         options.headers = { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' };
         options.body = rawBody;
+        }
     } else {
         return jsonResponse(405, { ok: false, error: 'method_not_allowed' });
     }

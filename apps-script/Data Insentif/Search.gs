@@ -19,6 +19,12 @@ const SEARCH_ROWS_CACHE_MAX_BYTES = 90000;
 const SEARCHES_PER_DEVICE_PER_DAY = 3;
 const SEARCH_DAILY_QUOTA_PREFIX = 'search_limit_';
 const SEARCH_DAILY_CLEANUP_KEY = 'search_limit_cleanup_date';
+const SEARCH_ADMIN_EMAILS = [
+  'theo.hasiholan@gmail.com',
+  'pendidikankristenjateng@gmail.com',
+  'asasetiabekti@gmail.com'
+];
+const SEARCH_GOOGLE_OAUTH_CLIENT_ID = '933605353737-828jhnli7ro1f8off5258kgvqtbf5ldt.apps.googleusercontent.com';
 const CAPTCHA_TTL_SECONDS = 120;
 const CAPTCHA_MIN_SOLVE_MS = 1000; // jawaban yang masuk lebih cepat dianggap bot
 // Pembatasan global (Apps Script anonim tidak punya identitas klien).
@@ -51,6 +57,48 @@ function doGet(e) {
     Logger.log('doGet error: ' + error);
     return jsonResponse_({ ok: false, error: 'server_error' });
   }
+}
+
+function doPost(e) {
+  const params = (e && e.parameter) || {};
+  if (params.action !== 'admin-search') return jsonResponse_({ ok: false, error: 'bad_request' });
+
+  try {
+    if (!isSearchAdmin_(params.credential)) return jsonResponse_({ ok: false, error: 'forbidden' });
+    if (bumpCounter_('search') > RATE_LIMIT_SEARCH_PER_MINUTE) {
+      return jsonResponse_({ ok: false, error: 'rate_limited' });
+    }
+    return jsonResponse_(searchTeachers_(params, true));
+  } catch (error) {
+    Logger.log('Admin teacher search error: ' + error);
+    return jsonResponse_({ ok: false, error: 'server_error' });
+  }
+}
+
+function isSearchAdmin_(credential) {
+  if (typeof credential !== 'string' || !credential || credential.length > 8192) return false;
+  const response = UrlFetchApp.fetch(
+    'https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(credential),
+    { muteHttpExceptions: true }
+  );
+  if (response.getResponseCode() !== 200) return false;
+
+  const claims = JSON.parse(response.getContentText());
+  const email = String(claims.email || '').trim().toLowerCase();
+  return claims.aud === SEARCH_GOOGLE_OAUTH_CLIENT_ID &&
+    String(claims.email_verified) === 'true' &&
+    Number(claims.exp || 0) > Math.floor(Date.now() / 1000) &&
+    SEARCH_ADMIN_EMAILS.some(admin => admin.toLowerCase() === email);
+}
+
+function authorizeSearchGoogleAuth() {
+  const response = UrlFetchApp.fetch(
+    'https://oauth2.googleapis.com/tokeninfo?id_token=invalid',
+    { muteHttpExceptions: true }
+  );
+  const status = response.getResponseCode();
+  Logger.log('Google tokeninfo permission check returned HTTP ' + status);
+  return status;
 }
 
 
@@ -275,23 +323,26 @@ function getSearchRows_(sheet) {
 }
 
 
-function searchTeachers_(params) {
+function searchTeachers_(params, isAdmin) {
   const query = normalizeText_(params.q);
   const kabKota = normalizeText_(params.kab);
 
-  if (!isValidDeviceId_(params.device)) {
+  if (!isAdmin && !isValidDeviceId_(params.device)) {
     return { ok: false, error: 'invalid_device' };
   }
   if ((!query && !kabKota) || query.length > SEARCH_MAX_QUERY_LENGTH || kabKota.length > 50) {
     return { ok: false, error: 'invalid_query' };
   }
-  if (consumeCaptcha_(params.token, params.answer, params.device) === null) {
+  if (!isAdmin && consumeCaptcha_(params.token, params.answer, params.device) === null) {
     bumpCounter_('fail');
     return { ok: false, error: 'captcha_failed' };
   }
 
-  const remaining = consumeDailySearch_(params.device);
-  if (remaining === null) return { ok: false, error: 'daily_limit' };
+  let remaining = null;
+  if (!isAdmin) {
+    remaining = consumeDailySearch_(params.device);
+    if (remaining === null) return { ok: false, error: 'daily_limit' };
+  }
 
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SEARCH_SHEET_NAME);
   if (!sheet) return { ok: false, error: 'server_error' };

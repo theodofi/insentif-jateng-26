@@ -109,6 +109,7 @@
             email: result.email
           });
           session.value = saved;
+          window.dispatchEvent(new CustomEvent('portal-session-changed'));
           loginOpen.value = false;
           showToast(`Berhasil masuk sebagai ${saved.name || result.email}`);
         } catch (error) {
@@ -129,6 +130,7 @@
       return;
     }
     session.value = null;
+    window.dispatchEvent(new CustomEvent('portal-session-changed'));
     closeMenus();
     if (route.path.startsWith('/admin/')) void router.push('/');
     showToast('Anda telah keluar.');

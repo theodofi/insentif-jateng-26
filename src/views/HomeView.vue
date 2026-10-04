@@ -1,8 +1,11 @@
 <script setup>
   import {
     computed,
+    onMounted,
+    onUnmounted,
     ref
   } from 'vue';
+  import portalApi from '../services/api.js';
   const searchApiUrl = 'https://script.google.com/macros/s/AKfycbxq4ZIhzpZjOSiqNfNnT8kudjPdZCm4WBE33bjcAkP9JiqVDGLE7cCpQ_pjpSNJxNz0Xw/exec';
   const deviceIdStorageKey = 'teacher-search-device-id-v1';
   const regions = [
@@ -147,6 +150,7 @@
   const status = ref('');
   const isError = ref(false);
   const loading = ref(false);
+  const isAdmin = ref(false);
   const teachers = ref([]);
   const currentPage = ref(1);
   const pageSize = 5;
@@ -157,6 +161,35 @@
       detail: message
     }));
   }
+  function syncAdminSession() {
+    try {
+      isAdmin.value = Boolean(portalApi.getAdminSession()?.credential);
+      if (isAdmin.value) {
+        captchaToken.value = '';
+        captchaImage.value = '';
+        captchaAnswer.value = '';
+        remaining.value = null;
+      }
+    } catch (error) {
+      isAdmin.value = false;
+      isError.value = true;
+      status.value = portalApi.showApiError(error);
+    }
+  }
+  function handleSessionChange() {
+    syncAdminSession();
+  }
+  onMounted(() => {
+    syncAdminSession();
+    window.addEventListener('portal-admin-ready', handleSessionChange);
+    window.addEventListener('portal-session-changed', handleSessionChange);
+    window.addEventListener('storage', handleSessionChange);
+  });
+  onUnmounted(() => {
+    window.removeEventListener('portal-admin-ready', handleSessionChange);
+    window.removeEventListener('portal-session-changed', handleSessionChange);
+    window.removeEventListener('storage', handleSessionChange);
+  });
   function createDeviceId() {
     const bytes = new Uint8Array(16);
     window.crypto.getRandomValues(bytes);
@@ -195,6 +228,44 @@
       if (!response.ok) throw new Error('request_failed');
       const data = await response.json();
       if (!data || data.ok !== true) throw new Error(data?.error || 'request_failed');
+      return data;
+    } catch (error) {
+      if (error.name === 'AbortError') throw new Error('search_timeout');
+      throw error;
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+  }
+  async function requestAdminSearchApi(params, credential) {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 30000);
+    try {
+      const response = await fetch('/.netlify/functions/portal-api', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+        },
+        body: new URLSearchParams({
+          workflow: 'teacherSearch',
+          action: 'admin-search',
+          credential,
+          q: params.q,
+          kab: params.kab
+        }),
+        cache: 'no-store',
+        credentials: 'omit',
+        referrerPolicy: 'no-referrer',
+        signal: controller.signal
+      });
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error('request_failed');
+      }
+      if (!response.ok || !data || data.ok !== true) {
+        throw new Error(data?.error || 'request_failed');
+      }
       return data;
     } catch (error) {
       if (error.name === 'AbortError') throw new Error('search_timeout');
@@ -253,6 +324,25 @@
     }
     loading.value = true;
     try {
+      const session = isAdmin.value ? portalApi.getAdminSession() : null;
+      if (session?.credential) {
+        status.value = 'Mencari data guru...';
+        const data = await requestAdminSearchApi({
+          q: normalizedQuery,
+          kab: region.value
+        }, session.credential);
+        teachers.value = Array.isArray(data.results) ? data.results.map(row => ({
+          name: String(row.name || ''),
+          satminkal: String(row.satminkal || ''),
+          kabKota: String(row.kabKota || '')
+        })) : [];
+        currentPage.value = 1;
+        remaining.value = null;
+        if (!teachers.value.length) status.value = 'Data tidak ditemukan.';
+        else if (data.truncated) status.value = `${data.total} data ditemukan, menampilkan ${teachers.value.length} pertama. Perjelas nama atau pilih Kab/Kota.`;
+        else status.value = `${teachers.value.length} data ditemukan.`;
+        return;
+      }
       if (!captchaToken.value) {
         teachers.value = [];
         status.value = 'Memuat verifikasi...';
@@ -359,13 +449,13 @@
               <option v-for="[value, label] in regions" :key="value" :value="value">{{ label }}</option>
             </select>
         </div>
-        <button v-if="!captchaToken" class="btn-primary teacher-search-button" type="submit" :disabled="loading">
+        <button v-if="isAdmin || !captchaToken" class="btn-primary teacher-search-button" type="submit" :disabled="loading">
             <i v-if="loading" class="fa-solid fa-spinner fa-spin mr-2" aria-hidden="true"></i>
             <i v-else class="fa-solid fa-magnifying-glass mr-2" aria-hidden="true"></i>
             <span>{{ loading ? 'Memproses...' : 'Cari' }}</span>
           </button>
       </form>
-      <div v-if="captchaToken" class="teacher-search-captcha" role="group" aria-labelledby="teacher-search-captcha-question">
+      <div v-if="captchaToken && !isAdmin" class="teacher-search-captcha" role="group" aria-labelledby="teacher-search-captcha-question">
         <div class="teacher-search-captcha-content">
           <p id="teacher-search-captcha-question" class="teacher-search-captcha-question">Hitung soal matematika pada gambar:</p>
           <img :src="captchaImage" class="teacher-search-captcha-image" width="280" height="80" alt="Soal matematika verifikasi dalam bentuk gambar">

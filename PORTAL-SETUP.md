@@ -55,3 +55,9 @@ The home-page Google sign-in checks the ID token against the Bulan Berjalan Janu
 The verified Google ID token is held in `localStorage` so the user can switch among admin panels, including in separate tabs, without signing in again. Existing sessions in `sessionStorage` are migrated automatically. The token is removed when the user selects **Keluar** and is rejected by the backend after expiry.
 
 After configuring both Juli-Desember endpoints and deploying, check all public monitors, sign in with an allowlisted account, open each admin panel from the profile menu, and verify that non-allowlisted Google accounts are rejected before testing admin reads, status saves, and PDF generation.
+
+### Home-page teacher search
+
+The public teacher search keeps its CAPTCHA and three-search daily limit. Admin searches bypass that daily quota and CAPTCHA only after the teacher-search Apps Script verifies the Google ID token and its email against `SEARCH_ADMIN_EMAILS` in `apps-script/Data Insentif/Search.gs`. Admin requests are sent through the Netlify function so the ID token is carried in a POST body rather than a URL.
+
+After updating `Search.gs`, deploy a new version of the teacher-search Apps Script web app. Its Apps Script project must allow external requests: add `https://www.googleapis.com/auth/script.external_request` to `oauthScopes`, run `authorizeSearchGoogleAuth()` once, approve the scope as the owner, and deploy the new version. Confirm the search deployment URL in `TEACHER_SEARCH_ENDPOINT` in `netlify/functions/portal-api.js`. Deploy Netlify after updating either endpoint or frontend code. The Apps Script also keeps its global per-minute abuse rate limit for admin searches.
