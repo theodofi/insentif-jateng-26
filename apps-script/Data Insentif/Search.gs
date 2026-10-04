@@ -63,8 +63,16 @@ function doPost(e) {
   const params = (e && e.parameter) || {};
   if (params.action !== 'admin-search') return jsonResponse_({ ok: false, error: 'bad_request' });
 
+  let authorized;
   try {
-    if (!isSearchAdmin_(params.credential)) return jsonResponse_({ ok: false, error: 'forbidden' });
+    authorized = isSearchAdmin_(params.credential);
+  } catch (error) {
+    Logger.log('Admin teacher search authentication failed: ' + error);
+    return jsonResponse_({ ok: false, error: 'auth_verification_failed' });
+  }
+  if (!authorized) return jsonResponse_({ ok: false, error: 'forbidden' });
+
+  try {
     if (bumpCounter_('search') > RATE_LIMIT_SEARCH_PER_MINUTE) {
       return jsonResponse_({ ok: false, error: 'rate_limited' });
     }

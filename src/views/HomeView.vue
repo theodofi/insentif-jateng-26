@@ -289,6 +289,14 @@
         return 'Masukkan nama guru atau pilih Kab/Kota.';
       case 'captcha_failed':
         return 'Jawaban verifikasi salah atau kedaluwarsa. Silakan coba soal baru.';
+      case 'forbidden':
+        return 'Akun Google admin tidak valid atau tidak memiliki izin untuk pencarian tanpa kuota. Masuk kembali dengan akun admin.';
+      case 'auth_verification_failed':
+        return 'Verifikasi admin pencarian belum diotorisasi. Jalankan authorizeSearchGoogleAuth() pada project Apps Script, setujui akses eksternal, lalu deploy ulang.';
+      case 'server_error':
+        return 'Pencarian gagal di Apps Script. Periksa Executions, akses spreadsheet, dan nama tab Data Gabungan.';
+      case 'upstream_timeout':
+        return 'Layanan pencarian merespons terlalu lama. Periksa Executions pada project Apps Script.';
       case 'not_found':
         return 'Data tidak ditemukan.';
       default:
