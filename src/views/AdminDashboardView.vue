@@ -407,7 +407,26 @@ onUnmounted(() => {
         </select>
       </div>
       <div v-if="loading" class="py-8 text-center text-sm text-gray-600"><span class="spinner-border spinner-border-sm me-2" role="status"></span>Memuat data admin...</div>
-      <div v-else class="table-responsive overflow-hidden rounded-xl border border-gray-200">
+      <div v-else class="space-y-3 md:hidden">
+        <article v-for="row in pageData" :key="`card-${row.barisAsli}-${row.no}-${row.nama}`" class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div class="mb-2 flex items-start justify-between gap-2">
+            <h4 class="mb-0 text-base font-semibold text-gray-900">{{ row.nama }}</h4>
+            <span class="text-xs text-gray-500">#{{ row.no }}</span>
+          </div>
+          <dl class="mb-3 space-y-1 text-sm">
+            <div class="flex gap-2"><dt class="w-20 shrink-0 text-gray-500">Kab/Kota</dt><dd class="mb-0 text-gray-800">{{ row.kabkota }}</dd></div>
+            <div class="flex gap-2"><dt class="w-20 shrink-0 text-gray-500">Satminkal</dt><dd class="mb-0 text-gray-800">{{ row.satminkal }}</dd></div>
+            <div class="flex gap-2"><dt class="w-20 shrink-0 text-gray-500">Cetak</dt><dd class="mb-0 text-gray-800">{{ row.statusPrint || '—' }}</dd></div>
+          </dl>
+          <div class="mb-3 flex flex-wrap gap-2">
+            <span :class="statusBadge(row.keterangan)">{{ row.keterangan || 'Belum Mengumpulkan' }}</span>
+            <span :class="[reviewBadge(row), 'text-start']">{{ row.perbaikan || 'Belum dicek' }}</span>
+          </div>
+          <button class="btn btn-sm btn-outline-primary w-100" :disabled="!Number(row.barisAsli)" @click="editRow(row)">Verval</button>
+        </article>
+        <p v-if="!pageData.length" class="rounded-xl border border-gray-200 py-5 text-center text-sm text-gray-500">Tidak ada data yang sesuai filter.</p>
+      </div>
+      <div v-if="!loading" class="table-responsive hidden overflow-hidden rounded-xl border border-gray-200 md:block">
         <table class="table table-hover mb-0 align-middle">
           <thead class="table-light"><tr>
             <th><button class="sort-button" @click="sortBy('no')">No <span>{{ sortKey === 'no' ? (sortAscending ? '▲' : '▼') : '↕' }}</span></button></th>
@@ -420,7 +439,7 @@ onUnmounted(() => {
               <td>{{ row.no }}</td><td class="min-w-48 fw-semibold">{{ row.nama }}</td><td>{{ row.kabkota }}</td>
               <td class="min-w-48">{{ row.satminkal }}</td>
               <td><span :class="statusBadge(row.keterangan)">{{ row.keterangan || 'Belum Mengumpulkan' }}</span></td>
-              <td><span :class="reviewBadge(row)">{{ row.perbaikan || 'Belum dicek' }}</span></td>
+              <td><span :class="[reviewBadge(row), 'text-start']">{{ row.perbaikan || 'Belum dicek' }}</span></td>
               <td>{{ row.statusPrint || '—' }}</td>
               <td><button class="btn btn-sm btn-outline-primary text-nowrap" :disabled="!Number(row.barisAsli)" @click="editRow(row)">Verval</button></td>
             </tr>

@@ -137,7 +137,24 @@ watch(() => props.workflow, loadData, { immediate: true });
       <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memuat data dari server...
     </div>
     <div v-else-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
-    <div v-else class="table-responsive overflow-hidden rounded-xl border border-gray-200">
+    <div v-else class="space-y-3 md:hidden">
+      <article v-for="row in pageData" :key="`card-${row.no}-${row.nama}`" class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div class="mb-2 flex items-start justify-between gap-2">
+          <h4 class="mb-0 text-base font-semibold text-gray-900">{{ row.nama }}</h4>
+          <span class="text-xs text-gray-500">#{{ row.no }}</span>
+        </div>
+        <dl class="mb-3 space-y-1 text-sm">
+          <div class="flex gap-2"><dt class="w-20 shrink-0 text-gray-500">Kab/Kota</dt><dd class="mb-0 text-gray-800">{{ row.kabkota }}</dd></div>
+          <div class="flex gap-2"><dt class="w-20 shrink-0 text-gray-500">Satminkal</dt><dd class="mb-0 text-gray-800">{{ row.satminkal }}</dd></div>
+        </dl>
+        <div class="flex flex-wrap gap-2">
+          <span :class="collectionClass(row.keterangan)">{{ row.keterangan }}</span>
+          <span :class="[statusClass(row.perbaikan), 'text-start']">{{ row.perbaikan }}</span>
+        </div>
+      </article>
+      <p v-if="pageData.length === 0" class="rounded-xl border border-gray-200 py-5 text-center text-sm text-gray-500">Tidak ada data yang sesuai dengan pencarian.</p>
+    </div>
+    <div v-if="!loading && !errorMessage" class="table-responsive hidden overflow-hidden rounded-xl border border-gray-200 md:block">
       <table class="table table-hover mb-0 align-middle">
         <thead class="table-light"><tr><th>No</th><th>Nama Guru</th><th>Kab/Kota</th><th>Satminkal / Sekolah</th><th>Keterangan</th><th>Status</th></tr></thead>
         <tbody>
@@ -147,7 +164,7 @@ watch(() => props.workflow, loadData, { immediate: true });
             <td>{{ row.kabkota }}</td>
             <td class="min-w-48">{{ row.satminkal }}</td>
             <td><span :class="collectionClass(row.keterangan)">{{ row.keterangan }}</span></td>
-            <td><span :class="statusClass(row.perbaikan)">{{ row.perbaikan }}</span></td>
+            <td><span :class="[statusClass(row.perbaikan), 'text-start']">{{ row.perbaikan }}</span></td>
           </tr>
           <tr v-if="pageData.length === 0"><td colspan="6" class="py-5 text-center text-sm text-gray-500">Tidak ada data yang sesuai dengan pencarian.</td></tr>
         </tbody>

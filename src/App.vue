@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import logoUrl from './assets/kemenag-logo.png';
 import portalApi from './services/api.js';
@@ -68,6 +68,7 @@ async function openLogin() {
     loginOpen.value = true;
     loginError.value = '';
     try {
+        await nextTick();
         const button = document.getElementById('vue-google-signin');
         if (!button) throw new Error('bad_request');
         await portalApi.renderGoogleButton(button, async response => {
