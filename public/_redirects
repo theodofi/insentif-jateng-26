@@ -1,2 +1,2 @@
-/admin/*.html /index.html 200
-/pantau/*.html /index.html 200
+/admin/* /index.html 200
+/pantau/* /index.html 200
