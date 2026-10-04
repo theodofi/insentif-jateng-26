@@ -1,6 +1,8 @@
 # Portal and Apps Script setup
 
-The public monitor pages and admin panels are static Netlify pages. The Apps Script projects expose JSON APIs only; the Netlify function proxies browser requests to avoid cross-origin browser restrictions.
+The frontend is a Vue 3 single-page app built with Vite. Vue Router preserves the existing home, Pantau, and admin URLs. Apps Script remains the backend and exposes JSON APIs only; the Netlify function proxies browser requests to avoid cross-origin browser restrictions. Do not call admin Apps Script deployments directly from Vue or move their authorization checks into the client.
+
+The active frontend is the Vue single-page app: `index.html` boots `src/main.js`; `src/router/` defines the routes; `src/views/` contains page views; `src/assets/` stores Vue assets; `src/services/api.js` connects Vue to the existing portal API; and `src/styles/` contains the Vue styles. The existing home, monitor, and admin URLs are handled by Vue Router; the old standalone HTML pages have been removed. Apps Script sources remain the backend source.
 
 ## Google OAuth
 
@@ -41,7 +43,11 @@ The Juli-Desember public monitor and admin panel use the separate workflow `berj
 
 ## Netlify
 
-Deploy the repository normally. Netlify detects the function in `netlify/functions/portal-api.js`; the `_headers` file applies CSP and browser security headers. The main portal links to the static public pages, and admin panels are available at `/admin/ajuan-janjun.html`, `/admin/ajuan-juldes.html`, `/admin/berjalan-janjun.html`, and `/admin/berjalan-juldes.html`.
+Install the frontend dependencies with `npm ci`, use `npm run dev` for the Vue development server, and use `npm run build` to produce `dist/`. Vite's development middleware and `public/_redirects` route the existing `/admin/*.html` and `/pantau/*.html` URLs to the Vue SPA, so separate static HTML pages are not needed. Netlify uses `netlify.toml` to publish `dist/` and deploy `netlify/functions/portal-api.js`; the redirects are limited to those app routes so Vite and other assets are not rewritten to HTML. `public/_headers` applies the browser security headers to the deployed SPA.
+
+For local testing through the Netlify function proxy, run the project with Netlify CLI (`netlify dev`) instead of calling Apps Script directly. A plain `npm run dev` serves the SPA but does not run Netlify Functions. Add `http://localhost:8888` to the Google OAuth authorized JavaScript origins if testing sign-in locally.
+
+The public views remain available at `/pantau/ajuan-janjun.html`, `/pantau/ajuan-juldes.html`, `/pantau/berjalan-janjun.html`, and `/pantau/berjalan-juldes.html`. Admin panels remain at `/admin/ajuan-janjun.html`, `/admin/ajuan-juldes.html`, `/admin/berjalan-janjun.html`, and `/admin/berjalan-juldes.html`.
 
 The home-page Google sign-in checks the ID token against the existing Ajuan Januari-Juni and Bulan Berjalan Apps Script projects. Only after both APIs accept the account does the portal show the Google profile and panel links. Each admin panel, including Ajuan Juli-Desember, revalidates that token against its own Apps Script allowlist before loading or changing data.
 

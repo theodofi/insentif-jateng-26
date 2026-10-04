@@ -16,6 +16,8 @@
     let authMessage;
     let googleButton;
     let identityScriptPromise;
+    let identityInitialized = false;
+    let googleCredentialHandler;
 
     async function request(workflow, parameters, method) {
         const controller = new AbortController();
@@ -142,6 +144,10 @@
     }
 
     function createAuthGate(workflow) {
+        if (authGate?.isConnected) {
+            activeWorkflow = workflow;
+            return authGate;
+        }
         const overlay = document.createElement('div');
         overlay.id = 'portal-admin-auth-gate';
         overlay.setAttribute('role', 'dialog');
@@ -207,30 +213,15 @@
         authMessage.textContent = '';
         googleButton.replaceChildren();
 
-        const clientId = window.PORTAL_CONFIG?.googleOAuthClientId;
-        if (!clientId || clientId.startsWith('REPLACE_')) {
-            authMessage.textContent = 'Atur Google OAuth Web Client ID di portal-config.js terlebih dahulu.';
-            return;
-        }
-
         try {
-            await loadGoogleIdentity();
-            window.google.accounts.id.initialize({
-                client_id: clientId,
-                callback: acceptGoogleCredential,
-                auto_select: false,
-                cancel_on_tap_outside: false
-            });
-            window.google.accounts.id.renderButton(googleButton, {
-                type: 'standard',
-                theme: 'outline',
-                size: 'large',
-                text: 'signin_with',
-                shape: 'rectangular',
-                width: 260
-            });
+            await renderGoogleButton(googleButton, acceptGoogleCredential);
         } catch {
-            authMessage.textContent = 'Google Sign-In gagal dimuat. Periksa koneksi dan konfigurasi OAuth.';
+            authMessage.textContent = showApiError(new Error(
+                window.PORTAL_CONFIG?.googleOAuthClientId?.startsWith('REPLACE_') ||
+                !window.PORTAL_CONFIG?.googleOAuthClientId
+                    ? 'auth_not_configured'
+                    : 'identity_script_failed'
+            ));
         }
     }
 
@@ -260,6 +251,16 @@
         if (sessionError) authMessage.textContent = showApiError(sessionError);
     }
 
+    function disposeAdmin() {
+        adminCredential = undefined;
+        activeWorkflow = undefined;
+        authGate?.remove();
+        authGate = undefined;
+        authMessage = undefined;
+        googleButton = undefined;
+        googleCredentialHandler = undefined;
+    }
+
     async function publicCall(functionName, args) {
         if (!monitorMethods.has(functionName) || args.length !== 0) throw new Error('bad_request');
         const result = await request(document.body.dataset.portalWorkflow, {
@@ -286,12 +287,44 @@
         });
     }
 
+    async function renderGoogleButton(container, credentialHandler) {
+        if (!(container instanceof HTMLElement) || typeof credentialHandler !== 'function') {
+            throw new Error('bad_request');
+        }
+        const clientId = window.PORTAL_CONFIG?.googleOAuthClientId;
+        if (!clientId || clientId.startsWith('REPLACE_')) throw new Error('auth_not_configured');
+        await loadGoogleIdentity();
+        googleCredentialHandler = credentialHandler;
+        if (!identityInitialized) {
+            window.google.accounts.id.initialize({
+                client_id: clientId,
+                callback: response => {
+                    if (googleCredentialHandler) void googleCredentialHandler(response);
+                },
+                auto_select: false,
+                cancel_on_tap_outside: false
+            });
+            identityInitialized = true;
+        }
+        container.replaceChildren();
+        window.google.accounts.id.renderButton(container, {
+            type: 'standard',
+            theme: 'outline',
+            size: 'large',
+            text: 'signin_with',
+            shape: 'rectangular',
+            width: 260
+        });
+    }
+
     window.portalApi = Object.freeze({
         initializeAdmin,
         authenticateAdmin,
+        renderGoogleButton,
         getAdminSession,
         saveAdminSession,
         clearAdminSession,
+        disposeAdmin,
         publicCall,
         adminCall,
         showApiError
