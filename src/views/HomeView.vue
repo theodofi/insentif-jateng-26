@@ -374,7 +374,7 @@
     try {
       const session = isAdmin.value ? portalApi.getAdminSession() : null;
       if (session?.credential) {
-        status.value = 'Mencari data guru...';
+        status.value = 'Mencari data penerima...';
         const data = await requestAdminSearchApi('admin-search', {
           q: normalizedQuery,
           kab: region.value
@@ -404,7 +404,7 @@
         status.value = 'Masukkan jawaban verifikasi.';
         return;
       }
-      status.value = 'Mencari data guru...';
+      status.value = 'Mencari data penerima...';
       const data = await requestSearchApi({
         action: 'search',
         q: normalizedQuery,
