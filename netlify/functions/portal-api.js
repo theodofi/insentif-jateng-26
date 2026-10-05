@@ -157,6 +157,19 @@ exports.handler = async function (event) {
         if (responseText.length > 2_000_000) {
             return jsonResponse(502, { ok: false, error: 'upstream_response_too_large' });
         }
+        const contentType = upstream.headers.get('content-type') || '';
+        if (contentType.includes('text/html') || /^\s*<!doctype html/i.test(responseText)) {
+            const errorText = responseText
+                .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+                .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+                .replace(/<[^>]+>/g, ' ')
+                .replace(/&quot;/g, '"')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .slice(0, 240);
+            console.error(`Apps Script returned an HTML error for workflow ${workflow}: ${errorText}`);
+            return jsonResponse(502, { ok: false, error: 'apps_script_runtime_error' });
+        }
         const payload = JSON.parse(responseText);
         if (!payload || typeof payload.ok !== 'boolean') throw new Error('Invalid upstream response.');
         return jsonResponse(upstream.ok ? 200 : 502, payload);

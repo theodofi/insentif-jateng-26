@@ -329,6 +329,8 @@
         return 'Layanan pencarian merespons terlalu lama. Periksa Executions pada project Apps Script.';
       case 'upstream_unavailable':
         return 'Netlify tidak dapat menghubungi Apps Script pencarian. Periksa deployment dan URL endpoint.';
+      case 'apps_script_runtime_error':
+        return 'Kode deployment Apps Script pencarian mengalami error. Salin Search.gs terbaru, simpan, lalu deploy sebagai versi web app baru. Periksa Executions untuk error dan nomor baris.';
       case 'bad_request':
         return 'Permintaan pencarian ditolak. Pastikan frontend dan Netlify Function sudah diperbarui.';
       case 'invalid_query':
@@ -396,7 +398,8 @@
         status.value = `Jawab soal verifikasi untuk melanjutkan pencarian. Sisa hari ini: ${remaining.value}.`;
         return;
       }
-      if (!captchaAnswer.value.trim()) {
+      const answer = String(captchaAnswer.value).trim();
+      if (!answer) {
         isError.value = true;
         status.value = 'Masukkan jawaban verifikasi.';
         return;
@@ -407,7 +410,7 @@
         q: normalizedQuery,
         kab: region.value,
         token: captchaToken.value,
-        answer: captchaAnswer.value.trim()
+        answer
       });
       captchaToken.value = '';
       captchaImage.value = '';
