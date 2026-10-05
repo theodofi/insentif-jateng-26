@@ -95,6 +95,15 @@
   function handlePortalToast(event) {
     if (typeof event.detail === 'string') showToast(event.detail);
   }
+  function handleSessionChanged(event) {
+    const hadSession = Boolean(session.value);
+    if (!refreshSession()) return;
+    if (hadSession && !session.value && event.detail?.reason === 'idle') {
+      closeMenus();
+      if (route.path.startsWith('/admin/')) void router.push('/');
+      showToast('Sesi admin berakhir setelah 1 jam tidak aktif. Silakan masuk kembali.');
+    }
+  }
   async function openLogin() {
     closeMenus();
     loginOpen.value = true;
@@ -154,11 +163,13 @@
     refreshSession();
     window.addEventListener('portal-admin-ready', handleReady);
     window.addEventListener('portal-toast', handlePortalToast);
+    window.addEventListener('portal-session-changed', handleSessionChanged);
     window.addEventListener('keydown', handleKeydown);
   });
   onUnmounted(() => {
     window.removeEventListener('portal-admin-ready', handleReady);
     window.removeEventListener('portal-toast', handlePortalToast);
+    window.removeEventListener('portal-session-changed', handleSessionChanged);
     window.removeEventListener('keydown', handleKeydown);
     window.clearTimeout(toastTimer);
   });

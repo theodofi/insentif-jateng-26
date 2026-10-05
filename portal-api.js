@@ -10,7 +10,12 @@
     ]);
     const requestTimeout = 60000;
     const adminSessionKey = 'portal-admin-session';
+    const adminIdleTimeout = 60 * 60 * 1000;
+    const activityStorageInterval = 30000;
     let adminCredential;
+    let adminSessionExpiryTimer;
+    let lastActivityStorageWrite = 0;
+    let activityTrackingEnabled = false;
     let activeWorkflow;
     let authGate;
     let authMessage;
@@ -114,6 +119,92 @@
         }
     }
 
+    function dispatchSessionChanged(detail = {}) {
+        window.dispatchEvent(new CustomEvent('portal-session-changed', { detail }));
+    }
+
+    function stopAdminActivityTracking() {
+        window.clearTimeout(adminSessionExpiryTimer);
+        adminSessionExpiryTimer = undefined;
+        if (!activityTrackingEnabled) return;
+        ['pointerdown', 'keydown', 'touchstart', 'scroll', 'mousemove'].forEach(type => {
+            document.removeEventListener(type, recordAdminActivity, true);
+        });
+        activityTrackingEnabled = false;
+        lastActivityStorageWrite = 0;
+    }
+
+    function scheduleAdminSessionExpiry(lastActivity) {
+        window.clearTimeout(adminSessionExpiryTimer);
+        const remaining = adminIdleTimeout - (Date.now() - lastActivity);
+        if (remaining <= 0) {
+            clearAdminSession();
+            dispatchSessionChanged({ reason: 'idle' });
+            return;
+        }
+        adminSessionExpiryTimer = window.setTimeout(() => {
+            try {
+                getAdminSession();
+            } catch (error) {
+                window.dispatchEvent(new CustomEvent('portal-toast', {
+                    detail: showApiError(error)
+                }));
+            }
+        }, remaining + 1);
+    }
+
+    function recordAdminActivity(event) {
+        if (event.isTrusted === false) return;
+        const now = Date.now();
+        if (now - lastActivityStorageWrite < activityStorageInterval) return;
+        let stored;
+        try {
+            stored = window.localStorage.getItem(adminSessionKey);
+            if (!stored) return;
+            const session = JSON.parse(stored);
+            if (!session || typeof session.credential !== 'string') return;
+            const lastActivity = Number(session.lastActivity) || now;
+            if (now - lastActivity >= adminIdleTimeout) {
+                clearAdminSession();
+                dispatchSessionChanged({ reason: 'idle' });
+                return;
+            }
+            session.lastActivity = now;
+            window.localStorage.setItem(adminSessionKey, JSON.stringify(session));
+            lastActivityStorageWrite = now;
+            scheduleAdminSessionExpiry(now);
+        } catch (error) {
+            window.dispatchEvent(new CustomEvent('portal-toast', {
+                detail: showApiError(error)
+            }));
+        }
+    }
+
+    function startAdminActivityTracking() {
+        if (activityTrackingEnabled) return;
+        ['pointerdown', 'keydown', 'touchstart', 'scroll', 'mousemove'].forEach(type => {
+            document.addEventListener(type, recordAdminActivity, { capture: true, passive: true });
+        });
+        activityTrackingEnabled = true;
+    }
+
+    window.addEventListener('storage', event => {
+        if (event.key !== adminSessionKey && event.key !== null) return;
+        if (event.newValue === null) {
+            stopAdminActivityTracking();
+            dispatchSessionChanged();
+            return;
+        }
+        try {
+            getAdminSession();
+            dispatchSessionChanged();
+        } catch (error) {
+            window.dispatchEvent(new CustomEvent('portal-toast', {
+                detail: showApiError(error)
+            }));
+        }
+    });
+
     function getAdminSession() {
         let stored;
         try {
@@ -132,6 +223,18 @@
         try {
             const session = JSON.parse(stored);
             if (session && typeof session.credential === 'string' && typeof session.email === 'string') {
+                const lastActivity = Number(session.lastActivity) || Date.now();
+                if (Date.now() - lastActivity >= adminIdleTimeout) {
+                    clearAdminSession();
+                    dispatchSessionChanged({ reason: 'idle' });
+                    return null;
+                }
+                if (session.lastActivity !== lastActivity) {
+                    session.lastActivity = lastActivity;
+                    window.localStorage.setItem(adminSessionKey, JSON.stringify(session));
+                }
+                startAdminActivityTracking();
+                scheduleAdminSessionExpiry(lastActivity);
                 const profile = readGoogleProfile(session.credential);
                 return {
                     ...session,
@@ -155,6 +258,7 @@
         const savedSession = {
             credential: session.credential,
             email: session.email,
+            lastActivity: Date.now(),
             name: profile.name || (
                 typeof session.name === 'string' ? session.name.trim() : ''
             ) || (sameCredential ? previous.name || '' : ''),
@@ -168,11 +272,15 @@
         } catch {
             throw new Error('session_storage_unavailable');
         }
+        lastActivityStorageWrite = savedSession.lastActivity;
+        startAdminActivityTracking();
+        scheduleAdminSessionExpiry(savedSession.lastActivity);
         return savedSession;
     }
 
     function clearAdminSession() {
         adminCredential = undefined;
+        stopAdminActivityTracking();
         try {
             window.localStorage.removeItem(adminSessionKey);
             window.sessionStorage.removeItem(adminSessionKey);

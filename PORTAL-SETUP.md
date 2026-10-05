@@ -52,13 +52,13 @@ The public views remain available at `/pantau/ajuan-janjun.html`, `/pantau/ajuan
 
 The home-page Google sign-in checks the ID token against the Bulan Berjalan Januari-Juni Apps Script project before showing the Google profile and panel links. Each admin panel, including Ajuan Januari-Juni and Ajuan Juli-Desember, independently revalidates that token against its own Apps Script allowlist before loading or changing data.
 
-The verified Google ID token is held in `localStorage` so the user can switch among admin panels, including in separate tabs, without signing in again. Existing sessions in `sessionStorage` are migrated automatically. The token is removed when the user selects **Keluar** and is rejected by the backend after expiry.
+The verified Google ID token is held in `localStorage` so the user can switch among admin panels, including in separate tabs, without signing in again. Existing sessions in `sessionStorage` are migrated automatically. The session expires after one hour without user activity in the portal, as well as when the Google ID token expires. Selecting **Keluar** removes the token immediately.
 
 After configuring both Juli-Desember endpoints and deploying, check all public monitors, sign in with an allowlisted account, open each admin panel from the profile menu, and verify that non-allowlisted Google accounts are rejected before testing admin reads, status saves, and PDF generation.
 
 ### Home-page teacher search
 
-The public teacher search keeps its CAPTCHA and three-search daily limit. Admin searches bypass that daily quota and CAPTCHA only after the teacher-search Apps Script verifies the Google ID token and its email against `SEARCH_ADMIN_EMAILS` in `apps-script/Data Insentif/Search.gs`. Admin requests are sent through the Netlify function so the ID token is carried in a POST body rather than a URL.
+The public teacher search keeps its CAPTCHA and three-search daily limit. Public CAPTCHA/search requests use the same-origin Netlify proxy rather than calling Apps Script directly from the browser. Admin searches bypass that daily quota and CAPTCHA only after the teacher-search Apps Script verifies the Google ID token and its email against `SEARCH_ADMIN_EMAILS` in `apps-script/Data Insentif/Search.gs`. Admin requests are sent through the Netlify function so the ID token is carried in a POST body rather than a URL.
 
 When an admin is signed in on the home page, an admin-only summary shows the number of non-empty teacher records and distinct Kab/Kota values from the same `Data Gabungan` search rows. The summary request uses the same server-side Google ID token verification as admin search.
 

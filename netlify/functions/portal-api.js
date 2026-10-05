@@ -54,10 +54,40 @@ exports.handler = async function (event) {
     let url = endpoint;
     const options = { method: event.httpMethod, redirect: 'follow' };
     if (event.httpMethod === 'GET') {
-        if (event.queryStringParameters?.action !== 'monitor') {
-            return jsonResponse(400, { ok: false, error: 'bad_request' });
+        if (workflow === 'teacherSearch') {
+            const parameters = event.queryStringParameters || {};
+            const action = parameters.action;
+            const device = parameters.device || '';
+            if (!['captcha', 'search'].includes(action) ||
+                !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(device)) {
+                return jsonResponse(400, { ok: false, error: 'bad_request' });
+            }
+            const allowedParameters = action === 'captcha'
+                ? { action, device }
+                : {
+                    action,
+                    device,
+                    q: parameters.q || '',
+                    kab: parameters.kab || '',
+                    token: parameters.token || '',
+                    answer: parameters.answer || ''
+                };
+            const query = new URLSearchParams(allowedParameters);
+            if (action === 'search' &&
+                ((!query.get('q').trim() && !query.get('kab').trim()) ||
+                    query.get('q').length > 100 ||
+                    query.get('kab').length > 50 ||
+                    !query.get('token') ||
+                    !query.get('answer'))) {
+                return jsonResponse(400, { ok: false, error: 'bad_request' });
+            }
+            url += `?${query.toString()}`;
+        } else {
+            if (event.queryStringParameters?.action !== 'monitor') {
+                return jsonResponse(400, { ok: false, error: 'bad_request' });
+            }
+            url += '?action=monitor';
         }
-        url += '?action=monitor';
     } else if (event.httpMethod === 'POST') {
         const parameters = postParameters;
         const action = parameters.get('action');

@@ -6,7 +6,6 @@
     ref
   } from 'vue';
   import portalApi from '../services/api.js';
-  const searchApiUrl = 'https://script.google.com/macros/s/AKfycbxq4ZIhzpZjOSiqNfNnT8kudjPdZCm4WBE33bjcAkP9JiqVDGLE7cCpQ_pjpSNJxNz0Xw/exec';
   const deviceIdStorageKey = 'teacher-search-device-id-v1';
   const regions = [
     ['KAB. BANJARNEGARA', 'Kab Banjarnegara'],
@@ -220,8 +219,10 @@
     return id;
   }
   async function requestSearchApi(params) {
-    const url = new URL(searchApiUrl);
-    Object.entries({ ...params,
+    const url = new URL('/.netlify/functions/portal-api', window.location.origin);
+    Object.entries({
+      workflow: 'teacherSearch',
+      ...params,
       device: getDeviceId()
     }).forEach(([key, value]) => url.searchParams.set(key, value));
     const controller = new AbortController();
