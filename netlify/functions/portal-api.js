@@ -83,10 +83,19 @@ exports.handler = async function (event) {
             }
             url += `?${query.toString()}`;
         } else {
-            if (event.queryStringParameters?.action !== 'monitor') {
+            const parameters = event.queryStringParameters || {};
+            const page = parameters.page || '1';
+            const pageSize = parameters.pageSize || '12';
+            const query = parameters.q || '';
+            const status = parameters.status || '';
+            if (parameters.action !== 'monitor' ||
+                !/^[1-9]\d*$/.test(page) ||
+                !/^(?:[1-9]|[1-4]\d|50)$/.test(pageSize) ||
+                query.length > 100 ||
+                !['', 'sudah', 'belum', 'perbaikan', 'catatan'].includes(status)) {
                 return jsonResponse(400, { ok: false, error: 'bad_request' });
             }
-            url += '?action=monitor';
+            url += `?${new URLSearchParams({ action: 'monitor', page, pageSize, q: query, status })}`;
         }
     } else if (event.httpMethod === 'POST') {
         const parameters = postParameters;

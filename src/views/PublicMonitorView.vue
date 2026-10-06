@@ -19,44 +19,19 @@
       required: true
     }
   });
-  const allData = ref([]);
+  const pageData = ref([]);
+  const totalCount = ref(0);
+  const filteredCount = ref(0);
+  const submittedCount = ref(0);
+  const pendingCount = ref(0);
+  const correctionCount = ref(0);
   const loading = ref(true);
   const errorMessage = ref('');
   const query = ref('');
   const statusFilter = ref('');
   const page = ref(1);
   const pageSize = 12;
-  function isSubmitted(row) {
-    const status = String(row.keterangan || '').toLowerCase();
-    return status.includes('sudah') || status.includes('lengkap');
-  }
-  function isCorrection(row) {
-    const correction = String(row.perbaikan || '').trim().toLowerCase();
-    return correction.length > 0 && correction !== 'belum dicek' &&
-      !/\blengkap\b/.test(correction) && !correction.includes('sudah print') &&
-      !correction.includes('catatan khusus:');
-  }
-  const submittedCount = computed(() => allData.value.filter(isSubmitted).length);
-  const pendingCount = computed(() => allData.value.length - submittedCount.value);
-  const correctionCount = computed(() => allData.value.filter(row => {
-    const status = String(row.perbaikan || '').trim().toLowerCase();
-    return status.length > 0 && status !== 'belum dicek' && !/\blengkap\b/.test(status) && !status.includes('sudah print');
-  }).length);
-  const filteredData = computed(() => {
-    const keyword = query.value.trim().toLocaleLowerCase('id');
-    return allData.value.filter(row => {
-      const textMatches = !keyword || [row.nama, row.kabkota, row.satminkal]
-        .some(value => String(value || '').toLocaleLowerCase('id').includes(keyword));
-      if (!textMatches) return false;
-      if (statusFilter.value === 'sudah') return isSubmitted(row);
-      if (statusFilter.value === 'belum') return !isSubmitted(row);
-      if (statusFilter.value === 'perbaikan') return isCorrection(row);
-      if (statusFilter.value === 'catatan') return String(row.perbaikan || '').toLowerCase().includes('catatan khusus:');
-      return true;
-    });
-  });
-  const pageCount = computed(() => Math.max(1, Math.ceil(filteredData.value.length / pageSize)));
-  const pageData = computed(() => filteredData.value.slice((page.value - 1) * pageSize, page.value * pageSize));
+  const pageCount = computed(() => Math.max(1, Math.ceil(filteredCount.value / pageSize)));
   function statusClass(value) {
     const status = String(value || '').toLowerCase();
     if (status.includes('belum dicek')) return 'badge bg-light text-secondary border';
@@ -72,29 +47,59 @@
     if (status.includes('sudah') || status.includes('lengkap')) return 'badge bg-success-subtle text-success-emphasis border border-success-subtle';
     return 'badge bg-light text-secondary border';
   }
+  let loadSequence = 0;
+  let searchTimer;
   async function loadData() {
+    const sequence = ++loadSequence;
     document.body.dataset.portalWorkflow = props.workflow;
     loading.value = true;
     errorMessage.value = '';
     try {
-      const result = await portalApi.publicCall('ambilDataSheetPengumpulanIndex2', []);
-      if (!result || !Array.isArray(result.dataList)) throw new Error('api_invalid_response');
-      allData.value = result.dataList.map((row, index) => ({
+      const result = await portalApi.publicCall('ambilDataSheetPengumpulanIndex2', [], {
+        page: page.value,
+        pageSize,
+        q: query.value.trim(),
+        status: statusFilter.value
+      });
+      if (sequence !== loadSequence) return;
+      if (!result || !Array.isArray(result.dataList) ||
+        !Number.isInteger(result.filteredCount) ||
+        !Number.isInteger(result.totalCount) ||
+        !Number.isInteger(result.submittedCount) ||
+        !Number.isInteger(result.pendingCount) ||
+        !Number.isInteger(result.correctionCount)) {
+        throw new Error('api_invalid_response');
+      }
+      totalCount.value = result.totalCount;
+      filteredCount.value = result.filteredCount;
+      submittedCount.value = result.submittedCount;
+      pendingCount.value = result.pendingCount;
+      correctionCount.value = result.correctionCount;
+      pageData.value = result.dataList.map((row, index) => ({
         ...row,
-        no: row.no || index + 1,
+        no: row.no || ((page.value - 1) * pageSize) + index + 1,
         keterangan: row.keterangan || 'Belum Mengumpulkan',
         perbaikan: row.perbaikan || 'Belum dicek'
       }));
     } catch (error) {
-      errorMessage.value = portalApi.showApiError(error);
+      if (sequence === loadSequence) errorMessage.value = portalApi.showApiError(error);
     } finally {
-      loading.value = false;
+      if (sequence === loadSequence) loading.value = false;
     }
   }
   watch([query, statusFilter], () => {
+    const pageWillReset = page.value !== 1;
     page.value = 1;
+    clearTimeout(searchTimer);
+    if (pageWillReset) return;
+    searchTimer = setTimeout(loadData, 300);
   });
-  watch(() => props.workflow, loadData, {
+  watch(page, loadData);
+  watch(() => props.workflow, () => {
+    clearTimeout(searchTimer);
+    page.value = 1;
+    loadData();
+  }, {
     immediate: true
   });
 </script>
@@ -128,7 +133,7 @@
     <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <h3 class="mb-0 text-lg font-bold text-gray-900">Tabel Rekapitulasi</h3>
       <div class="flex flex-col gap-2 sm:flex-row">
-        <input v-model="query" type="search" class="form-control form-control-sm min-w-64" placeholder="Cari nama, daerah, atau sekolah..." aria-label="Cari data">
+        <input v-model="query" type="search" maxlength="100" class="form-control form-control-sm min-w-64" placeholder="Cari nama, daerah, atau sekolah..." aria-label="Cari data">
         <select v-model="statusFilter" class="form-select form-select-sm sm:w-52" aria-label="Filter status">
             <option value="">Semua status</option>
             <option value="sudah">Sudah mengumpulkan</option>
@@ -138,7 +143,7 @@
           </select>
       </div>
     </div>
-    <p class="mb-3 text-xs text-gray-500">Menampilkan {{ filteredData.length }} dari {{ allData.length }} data</p>
+    <p class="mb-3 text-xs text-gray-500">Menampilkan {{ pageData.length }} dari {{ filteredCount }} hasil ({{ totalCount }} total data)</p>
     <div v-if="loading" class="rounded-xl border border-gray-200 p-8 text-center text-sm text-gray-600">
       <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memuat data dari server...
     </div>

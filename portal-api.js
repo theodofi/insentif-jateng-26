@@ -417,10 +417,28 @@
         googleCredentialHandler = undefined;
     }
 
-    async function publicCall(functionName, args) {
-        if (!monitorMethods.has(functionName) || args.length !== 0) throw new Error('bad_request');
+    async function publicCall(functionName, args, options = {}) {
+        if (!monitorMethods.has(functionName) || !Array.isArray(args) || args.length !== 0 ||
+            !options || typeof options !== 'object') {
+            throw new Error('bad_request');
+        }
+        const page = Number(options.page === undefined ? 1 : options.page);
+        const pageSize = Number(options.pageSize === undefined ? 12 : options.pageSize);
+        const query = String(options.q || '');
+        const status = String(options.status || '');
+        if (
+            !Number.isInteger(page) || page < 1 ||
+            !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 50 ||
+            query.length > 100 ||
+            !['', 'sudah', 'belum', 'perbaikan', 'catatan'].includes(status)) {
+            throw new Error('bad_request');
+        }
         const result = await request(document.body.dataset.portalWorkflow, {
-            action: 'monitor'
+            action: 'monitor',
+            page,
+            pageSize,
+            q: query,
+            status
         }, 'GET');
         return result.data;
     }

@@ -4,6 +4,8 @@ const FOLDER_ID = '1hMgGw_Bxz7XYC5DHVlVN9YzX7kw_Y0VY';
 const FOLERD_LAMPIRAN_ID = '1TE0V1Bz6anTZ9N6DNS6XQ_t0kfUuhXuSnbH4SEMsusety30nFqUxn7nDgUFWwvjjFOjR6zMN'; 
 
 const STATUS_PRINT = 'Sudah Print';
+const PUBLIC_MONITOR_CACHE_KEY = 'public_monitor_snapshot_v1';
+const PUBLIC_MONITOR_CACHE_TTL_SECONDS = 30;
 const SHEET_1 = 'Form Responses 1';
 const SHEET_2 = 'Status Pengumpulan';
 
@@ -190,8 +192,15 @@ function doGet(e) {
   if (!e || !e.parameter || e.parameter.action !== 'monitor') {
     return apiResponse_({ ok: false, error: 'bad_request' });
   }
+  const params = e.parameter;
+  if ((params.page && !/^[1-9]\d*$/.test(params.page)) ||
+      (params.pageSize && !/^(?:[1-9]|[1-4]\d|50)$/.test(params.pageSize)) ||
+      (params.q && params.q.length > 100) ||
+      (params.status && !['sudah', 'belum', 'perbaikan', 'catatan'].includes(params.status))) {
+    return apiResponse_({ ok: false, error: 'bad_request' });
+  }
   try {
-    return apiResponse_({ ok: true, data: ambilDataSheetPengumpulanIndex2() });
+    return apiResponse_({ ok: true, data: ambilDataSheetPengumpulanIndex2(params) });
   } catch (error) {
     Logger.log('Public monitor API error: ' + error);
     return apiResponse_({ ok: false, error: 'server_error' });
@@ -419,39 +428,120 @@ function simpanStatusVerval(baris, catatan, skamBulan, lapkinBulan, hadirBulan) 
     setColVal('Laporan Kinerja/Jurnal', lapkinBulan);
     setColVal('Daftar Hadir/Presensi', hadirBulan);
 
+    clearPublicMonitorCache_();
     return "Berhasil";
   } catch (e) { return "Error: " + e.message; }
 }
 
-function ambilDataSheetPengumpulanIndex2() {
+function ambilDataSheetPengumpulanIndex2(options) {
+  const snapshot = getPublicMonitorSnapshot_();
+  const settings = options || {};
+  const requestedPage = Number(settings.page);
+  const requestedPageSize = Number(settings.pageSize);
+  const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const pageSize = Number.isInteger(requestedPageSize) && requestedPageSize > 0
+    ? Math.min(requestedPageSize, 50)
+    : 12;
+  const query = String(settings.q || '').trim().toLowerCase();
+  const status = String(settings.status || '');
+  const dataList = snapshot.dataList;
+  const filtered = dataList.filter((row) => {
+    const textMatches = !query || [row.nama, row.kabkota, row.satminkal]
+      .some((value) => String(value || '').toLowerCase().includes(query));
+    if (!textMatches) return false;
+    const submitted = isPublicMonitorSubmitted_(row);
+    if (status === 'sudah') return submitted;
+    if (status === 'belum') return !submitted;
+    if (status === 'perbaikan') return isPublicMonitorCorrection_(row);
+    if (status === 'catatan') return String(row.perbaikan || '').toLowerCase().includes('catatan khusus:');
+    return true;
+  });
+  const correctionCount = dataList.filter((row) => {
+    const correction = String(row.perbaikan || '').trim().toLowerCase();
+    return correction.length > 0 && correction !== 'belum dicek' &&
+      !/\blengkap\b/.test(correction) && !correction.includes('sudah print');
+  }).length;
+  const submittedCount = dataList.filter(isPublicMonitorSubmitted_).length;
+  return {
+    dataList: filtered.slice((page - 1) * pageSize, page * pageSize),
+    totalCount: dataList.length,
+    filteredCount: filtered.length,
+    page,
+    pageSize,
+    submittedCount,
+    pendingCount: dataList.length - submittedCount,
+    correctionCount,
+    totalPerbaikan: snapshot.totalPerbaikan,
+    totalLengkap: snapshot.totalLengkap,
+    totalBelumDicek: snapshot.totalBelumDicek
+  };
+}
+
+function getPublicMonitorSnapshot_() {
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get(PUBLIC_MONITOR_CACHE_KEY);
+  if (cached) {
+    try {
+      const snapshot = JSON.parse(cached);
+      if (snapshot && Array.isArray(snapshot.dataList)) return snapshot;
+    } catch (error) {
+      cache.remove(PUBLIC_MONITOR_CACHE_KEY);
+    }
+  }
+
   const sheet2 = getSheet(SHEET_2);
   if (!sheet2) return { dataList: [], totalPerbaikan: 0, totalLengkap: 0, totalBelumDicek: 0 };
-  
   const h2 = sheet2.getRange(1, 1, 1, sheet2.getLastColumn()).getValues()[0];
+  const indexes = {
+    nama: getColIdx(h2, 'nama'),
+    status: getColIdx(h2, 'status'),
+    kabkota: getColIdx(h2, 'kab/kota'),
+    satminkal: getColIdx(h2, 'satminkal')
+  };
   const mapRes = getMapResponses();
-  const res = { dataList: [], totalPerbaikan: 0, totalLengkap: 0, totalBelumDicek: 0 };
-  
+  const snapshot = { dataList: [], totalPerbaikan: 0, totalLengkap: 0, totalBelumDicek: 0 };
   sheet2.getDataRange().getValues().slice(1).forEach((row) => {
-    const nama = getVal(row, getColIdx(h2, 'nama'));
-    if (nama) {
-      const nKey = nama.toLowerCase();
-      const ket = getVal(row, getColIdx(h2, 'status'));
-      const sudahKumpul = mapRes[nKey]?.sudahKumpul || ket.toLowerCase().includes('sudah') || ket.toLowerCase().includes('lengkap');
-      const perbaikan = mapRes[nKey]?.catatan || 'Belum dicek';
-      
-      if (sudahKumpul) {
-        if (perbaikan.toLowerCase().includes('lengkap')) res.totalLengkap++;
-        else if (perbaikan.toLowerCase() === '' || perbaikan.toLowerCase() === 'belum dicek') res.totalBelumDicek++;
-        else res.totalPerbaikan++;
-      }
-
-      res.dataList.push({
-        no: res.dataList.length + 1, nama, kabkota: getVal(row, getColIdx(h2, 'kab/kota')) || '-', satminkal: getVal(row, getColIdx(h2, 'satminkal')) || '-',
-        keterangan: ket || (sudahKumpul ? 'Sudah Mengumpulkan' : 'Belum Mengumpulkan'), perbaikan
-      });
+    const nama = getVal(row, indexes.nama);
+    if (!nama) return;
+    const nKey = nama.toLowerCase();
+    const ket = getVal(row, indexes.status);
+    const sudahKumpul = mapRes[nKey]?.sudahKumpul || ket.toLowerCase().includes('sudah') || ket.toLowerCase().includes('lengkap');
+    const perbaikan = mapRes[nKey]?.catatan || 'Belum dicek';
+    if (sudahKumpul) {
+      if (perbaikan.toLowerCase().includes('lengkap')) snapshot.totalLengkap++;
+      else if (perbaikan.toLowerCase() === '' || perbaikan.toLowerCase() === 'belum dicek') snapshot.totalBelumDicek++;
+      else snapshot.totalPerbaikan++;
     }
+    snapshot.dataList.push({
+      no: snapshot.dataList.length + 1,
+      nama,
+      kabkota: getVal(row, indexes.kabkota) || '-',
+      satminkal: getVal(row, indexes.satminkal) || '-',
+      keterangan: ket || (sudahKumpul ? 'Sudah Mengumpulkan' : 'Belum Mengumpulkan'),
+      perbaikan
+    });
   });
-  return res;
+  const serialized = JSON.stringify(snapshot);
+  if (Utilities.newBlob(serialized).getBytes().length <= 90000) {
+    cache.put(PUBLIC_MONITOR_CACHE_KEY, serialized, PUBLIC_MONITOR_CACHE_TTL_SECONDS);
+  }
+  return snapshot;
+}
+
+function isPublicMonitorSubmitted_(row) {
+  const status = String(row.keterangan || '').toLowerCase();
+  return status.includes('sudah') || status.includes('lengkap');
+}
+
+function isPublicMonitorCorrection_(row) {
+  const correction = String(row.perbaikan || '').trim().toLowerCase();
+  return correction.length > 0 && correction !== 'belum dicek' &&
+    !/\blengkap\b/.test(correction) && !correction.includes('sudah print') &&
+    !correction.includes('catatan khusus:');
+}
+
+function clearPublicMonitorCache_() {
+  CacheService.getScriptCache().remove(PUBLIC_MONITOR_CACHE_KEY);
 }
 
 function bukaAksesFolderLampiranKhususAdmin() {
@@ -473,7 +563,10 @@ function jalankanBukaAksesFolder() {
 // ==========================================
 // PEMBERSIHAN DUPLIKAT & OPTIMASI DRIVE
 // ==========================================
-function onFormSubmit(e) { cleanupDuplicateSubmissions(); }
+function onFormSubmit(e) {
+  cleanupDuplicateSubmissions();
+  clearPublicMonitorCache_();
+}
 
 function extractFileIds(urlString) {
   return !urlString ? [] : urlString.toString().split(',').map(url => {

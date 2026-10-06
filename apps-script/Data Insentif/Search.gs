@@ -13,7 +13,7 @@ const SEARCH_FIRST_ROW = 2;
 const SEARCH_MAX_QUERY_LENGTH = 100;
 const SEARCH_MAX_RESULTS = 30;
 const SEARCH_ROWS_CACHE_KEY = 'teacher_search_rows_v1';
-const SEARCH_ROWS_CACHE_TTL_SECONDS = 30;
+const SEARCH_ROWS_CACHE_TTL_SECONDS = 300;
 const SEARCH_ROWS_CACHE_MAX_BYTES = 90000;
 // Limit applies to a browser profile's stored random ID, not hardware identity.
 const SEARCHES_PER_DEVICE_PER_DAY = 3;

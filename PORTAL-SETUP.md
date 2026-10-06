@@ -23,6 +23,8 @@ For **each** corresponding Apps Script project:
 
 The deployment URLs are configured in `netlify/functions/portal-api.js`. Update those constants if a deployment URL changes. Do not remove the email allowlist checks.
 
+Public monitors now request one 12-row page at a time; searching and status filters are applied by Apps Script, which returns whole-dataset summary counts separately. Each workflow caches its prepared monitor snapshot for 30 seconds (and clears it after admin status saves and form submissions). Copy and deploy the updated source for all four workflows, then deploy Netlify so the new pagination contract is active. The home-page teacher search keeps its spreadsheet-row cache for up to five minutes.
+
 ### Ajuan Juli-Desember 2026
 
 The Juli-Desember public monitor and admin panel use the separate workflow `ajuanJulDes`; they must not be pointed at the Januari-Juni Ajuan spreadsheet.
