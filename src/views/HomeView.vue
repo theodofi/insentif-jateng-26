@@ -343,6 +343,26 @@
         return `Data guru gagal dimuat (${/^[a-z0-9_]+$/i.test(error.message) ? error.message : 'network_error'}). Periksa koneksi dan deployment, lalu coba lagi.`;
     }
   }
+  function describePublicSearchError(error) {
+    switch (error?.message) {
+      case 'search_timeout':
+        return 'Pencarian merespons terlalu lama. Silakan coba lagi.';
+      case 'rate_limited':
+        return 'Terlalu banyak permintaan. Coba lagi dalam beberapa saat.';
+      case 'daily_limit':
+        return 'Kuota pencarian hari ini sudah habis (maksimal 3 kali per hari). Coba lagi besok.';
+      case 'device_storage_unavailable':
+        return 'Pencarian memerlukan penyimpanan browser. Aktifkan penyimpanan situs lalu coba lagi.';
+      case 'invalid_query':
+        return 'Masukkan nama penerima atau pilih Kab/Kota.';
+      case 'captcha_failed':
+        return 'Jawaban verifikasi salah atau kedaluwarsa. Silakan coba soal baru.';
+      case 'not_found':
+        return 'Data tidak ditemukan.';
+      default:
+        return 'Pencarian belum dapat dimuat. Silakan coba lagi beberapa saat.';
+    }
+  }
   async function loadCaptcha() {
     const data = await requestSearchApi({
       action: 'captcha'
@@ -371,9 +391,11 @@
       return;
     }
     loading.value = true;
+    let isAdminSearch = false;
     try {
       const session = isAdmin.value ? portalApi.getAdminSession() : null;
       if (session?.credential) {
+        isAdminSearch = true;
         status.value = 'Mencari data penerima...';
         const data = await requestAdminSearchApi('admin-search', {
           q: normalizedQuery,
@@ -427,14 +449,14 @@
       else status.value = `${teachers.value.length} data ditemukan. Sisa pencarian hari ini: ${data.remaining}.`;
     } catch (error) {
       isError.value = true;
-      status.value = describeError(error);
+      status.value = isAdminSearch ? describeError(error) : describePublicSearchError(error);
       if (error.message === 'captcha_failed') {
         try {
           await loadCaptcha();
         } catch (captchaError) {
           captchaToken.value = '';
           captchaImage.value = '';
-          status.value = `${describeError(error)} ${describeError(captchaError)}`;
+          status.value = `${describePublicSearchError(error)} ${describePublicSearchError(captchaError)}`;
         }
       } else {
         captchaToken.value = '';
@@ -452,7 +474,7 @@
       isError.value = false;
     } catch (error) {
       isError.value = true;
-      status.value = describeError(error);
+      status.value = describePublicSearchError(error);
       captchaToken.value = '';
       captchaImage.value = '';
     } finally {
