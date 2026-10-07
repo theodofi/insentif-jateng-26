@@ -21,6 +21,9 @@
     let loginMessage;
     let identityScriptPromise;
     let googleIdentityInitialized = false;
+    const LOGIN_LIMIT_KEY = 'admin-login-limit';
+    const MAX_LOGIN_FAILURES = 3;
+    const LOGIN_LOCKOUT_MS = 15 * 60 * 1000;
 
     const buttonClasses = 'inline-flex flex-shrink-0 items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm';
 
@@ -203,8 +206,55 @@
         return identityScriptPromise;
     }
 
+    function readLoginLimit() {
+        try {
+            const data = JSON.parse(localStorage.getItem(LOGIN_LIMIT_KEY));
+            return {
+                failures: Number(data?.failures) || 0,
+                lockedUntil: Number(data?.lockedUntil) || 0
+            };
+        } catch {
+            return { failures: 0, lockedUntil: 0 };
+        }
+    }
+
+    function writeLoginLimit(state) {
+        try {
+            localStorage.setItem(LOGIN_LIMIT_KEY, JSON.stringify(state));
+        } catch {
+            // Storage unavailable; limit cannot be persisted.
+        }
+    }
+
+    function lockoutRemainingMinutes() {
+        const state = readLoginLimit();
+        if (state.lockedUntil > Date.now()) return Math.ceil((state.lockedUntil - Date.now()) / 60000);
+        if (state.lockedUntil) writeLoginLimit({ failures: 0, lockedUntil: 0 });
+        return 0;
+    }
+
+    function lockoutMessage(minutes) {
+        return `Terlalu banyak percobaan login gagal. Coba lagi dalam ${minutes} menit.`;
+    }
+
+    function recordLoginFailure() {
+        const state = readLoginLimit();
+        state.failures += 1;
+        if (state.failures >= MAX_LOGIN_FAILURES) {
+            state.failures = 0;
+            state.lockedUntil = Date.now() + LOGIN_LOCKOUT_MS;
+        }
+        writeLoginLimit(state);
+        return state;
+    }
+
     async function acceptGoogleCredential(response) {
         if (!response?.credential || !loginMessage) return;
+        const lockedMinutes = lockoutRemainingMinutes();
+        if (lockedMinutes) {
+            loginMessage.textContent = lockoutMessage(lockedMinutes);
+            return;
+        }
         loginMessage.textContent = 'Memverifikasi akun pada kedua panel...';
         try {
             const result = await window.portalApi.authenticateAdmin(response.credential);
@@ -214,12 +264,21 @@
                 email: result.email,
                 picture: safeProfilePicture(claims.picture)
             });
+            writeLoginLimit({ failures: 0, lockedUntil: 0 });
             closeLoginView();
             renderAccount();
             const workflow = document.body.dataset.portalWorkflow;
             if (workflow) await window.portalApi.initializeAdmin(workflow);
         } catch (error) {
-            loginMessage.textContent = window.portalApi.showApiError(error);
+            const state = recordLoginFailure();
+            const remaining = lockoutRemainingMinutes();
+            if (remaining) {
+                loginMessage.textContent = lockoutMessage(remaining);
+                googleButton?.replaceChildren();
+            } else {
+                const left = MAX_LOGIN_FAILURES - state.failures;
+                loginMessage.textContent = `${window.portalApi.showApiError(error)} Sisa percobaan: ${left}.`;
+            }
         }
     }
 
@@ -231,6 +290,12 @@
         loginButton.setAttribute('aria-expanded', 'true');
         loginMessage.textContent = '';
         googleButton.replaceChildren();
+
+        const lockedMinutes = lockoutRemainingMinutes();
+        if (lockedMinutes) {
+            loginMessage.textContent = lockoutMessage(lockedMinutes);
+            return;
+        }
 
         const clientId = window.PORTAL_CONFIG?.googleOAuthClientId;
         if (!clientId || clientId.startsWith('REPLACE_')) {

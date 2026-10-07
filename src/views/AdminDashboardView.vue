@@ -574,8 +574,8 @@
         mounted = true;
         window.addEventListener('portal-admin-ready', onAdminReady);
         refreshTimer = window.setInterval(() => {
-            if (canLoad.value && !loading.value && !saving.value && !processing.value) void loadData(false);
-        }, 30000);
+            if (!document.hidden && canLoad.value && !loading.value && !saving.value && !processing.value) void loadData(false);
+        }, 60000);
         void startWorkflow(props.workflow);
     });
     onUnmounted(() => {

@@ -15,6 +15,11 @@ const ADMIN_METHODS = new Set([
     'simpanStatusVerval'
 ]);
 
+const MONITOR_CACHE_TTL_MS = 30000;
+const MONITOR_CACHE_MAX_ENTRIES = 200;
+const monitorCache = new Map();
+const monitorInflight = new Map();
+
 function jsonResponse(statusCode, payload) {
     return {
         statusCode,
@@ -192,4 +197,4 @@ exports.handler = async function (event) {
     } finally {
         clearTimeout(timeoutId);
     }
-};
+}

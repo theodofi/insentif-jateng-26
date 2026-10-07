@@ -75,12 +75,12 @@
             api_not_configured: 'Konfigurasi API belum lengkap.',
             api_timeout: 'Server merespons terlalu lama. Silakan coba lagi.',
             forbidden: 'Akun Google ini tidak memiliki akses admin.',
-            auth_verification_failed: 'Apps Script tidak dapat menghubungi layanan verifikasi Google. Jalankan authorizeGoogleAuth() pada kedua project, izinkan akses eksternal, lalu deploy ulang.',
-            server_error: 'Apps Script mengalami kesalahan. Periksa riwayat Executions pada project Google Apps Script.',
-            upstream_timeout: 'Apps Script merespons terlalu lama. Coba lagi; jika berulang, periksa riwayat Executions pada project Apps Script terkait.',
-            upstream_unavailable: 'Netlify tidak dapat menghubungi Apps Script. Periksa URL deployment dan pastikan versi API terbaru sudah dipublikasikan.',
-            api_invalid_response: 'Server mengirim respons yang tidak valid. Periksa deployment fungsi Netlify dan Apps Script.',
-            api_request_failed: 'Permintaan API gagal. Periksa deployment Netlify dan Apps Script.',
+            auth_verification_failed: 'Server tidak dapat menghubungi layanan verifikasi Google. Silakan coba lagi nanti.',
+            server_error: 'Server mengalami kesalahan. Silakan coba lagi nanti.',
+            upstream_timeout: 'Server merespons terlalu lama. Silakan coba lagi.',
+            upstream_unavailable: 'Server tidak dapat dihubungi. Silakan coba lagi nanti.',
+            api_invalid_response: 'Server mengirim respons yang tidak valid. Silakan coba lagi.',
+            api_request_failed: 'Permintaan gagal. Silakan coba lagi.',
             auth_not_configured: 'Client ID Google belum dikonfigurasi.',
             invalid_admin_token: 'Sesi Google tidak valid. Silakan masuk kembali.',
             session_storage_unavailable: 'Penyimpanan browser tidak tersedia. Izinkan penyimpanan situs lalu coba lagi.',
@@ -388,13 +388,10 @@
         let sessionError;
         if (session) {
             try {
-                const result = await request(workflow, {
-                    action: 'auth',
-                    credential: session.credential
-                }, 'POST');
+                // Every admin call re-verifies the credential server-side, so a
+                // separate auth round trip is skipped; a forbidden reply reopens the gate.
                 adminCredential = session.credential;
-                saveAdminSession({ credential: session.credential, email: result.email });
-                window.dispatchEvent(new CustomEvent('portal-admin-ready', { detail: { email: result.email } }));
+                window.dispatchEvent(new CustomEvent('portal-admin-ready', { detail: { email: session.email } }));
                 return;
             } catch (error) {
                 adminCredential = undefined;

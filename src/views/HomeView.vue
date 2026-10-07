@@ -322,21 +322,21 @@
       case 'forbidden':
         return 'Akun Google admin tidak valid atau tidak memiliki izin untuk pencarian tanpa kuota. Masuk kembali dengan akun admin.';
       case 'auth_verification_failed':
-        return 'Verifikasi admin pencarian belum diotorisasi. Jalankan authorizeSearchGoogleAuth() pada project Apps Script, setujui akses eksternal, lalu deploy ulang.';
+        return 'Verifikasi admin pencarian belum diotorisasi.';
       case 'server_error':
-        return 'Pencarian gagal di Apps Script. Periksa Executions, akses spreadsheet, dan nama tab Data Gabungan.';
+        return 'Pencarian gagal. Silakan coba lagi nanti.';
       case 'upstream_timeout':
-        return 'Layanan pencarian merespons terlalu lama. Periksa Executions pada project Apps Script.';
+        return 'Layanan pencarian merespons terlalu lama. Silakan coba lagi.';
       case 'upstream_unavailable':
-        return 'Netlify tidak dapat menghubungi Apps Script pencarian. Periksa deployment dan URL endpoint.';
+        return 'Layanan pencarian tidak dapat dihubungi. Silakan coba lagi nanti.';
       case 'apps_script_runtime_error':
-        return 'Kode deployment Apps Script pencarian mengalami error. Salin Search.gs terbaru, simpan, lalu deploy sebagai versi web app baru. Periksa Executions untuk error dan nomor baris.';
+        return 'Layanan pencarian mengalami kesalahan. Silakan coba lagi nanti.';
       case 'bad_request':
-        return 'Permintaan pencarian ditolak. Pastikan frontend dan Netlify Function sudah diperbarui.';
+        return 'Permintaan pencarian ditolak.';
       case 'invalid_query':
         return 'Masukkan nama guru atau pilih Kab/Kota.';
       case 'request_failed':
-        return 'Respons pencarian tidak valid. Periksa Netlify Function dan Apps Script.';
+        return 'Respons pencarian tidak valid. Silakan coba lagi.';
       case 'not_found':
         return 'Data tidak ditemukan.';
       default:
