@@ -245,7 +245,7 @@
         </nav>
       </aside>
     </header>
-    <main class="portal-main mx-auto w-full max-w-6xl flex-grow px-4 py-6 md:px-6 md:py-8" :class="{ 'portal-home-main': route.path === '/' }">
+    <main class="portal-main mx-auto w-full max-w-6xl flex-grow px-4 py-6 md:px-6 md:py-8" :class="{ 'portal-home-main': route.path === '/', 'portal-admin-main': route.path.startsWith('/admin/') }">
       <RouterView v-slot="{ Component }">
         <Transition name="page" mode="out-in" appear>
           <component :is="Component" />
@@ -312,6 +312,9 @@
     margin: 1rem auto;
     padding: 1rem;
   }
+  .portal-main.portal-admin-main {
+    max-width: 90rem;
+  }
   .portal-account-email {
     max-width: 12rem;
   }
@@ -349,6 +352,10 @@
     }
     .portal-main.portal-home-main {
       padding: 1.5rem;
+    }
+    .portal-main.portal-admin-main {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
     }
     .portal-home-header .portal-header-inner {
       padding: 0;

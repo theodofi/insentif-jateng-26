@@ -107,7 +107,7 @@ exports.handler = async function (event) {
         const action = parameters.get('action');
         if (workflow === 'teacherSearch') {
             const credential = parameters.get('credential');
-            if (!['admin-search', 'admin-summary'].includes(action) ||
+            if (!['admin-search', 'admin-summary', 'admin-payment-statuses'].includes(action) ||
                 !credential ||
                 credential.length > 8192) {
                 return jsonResponse(400, { ok: false, error: 'bad_request' });

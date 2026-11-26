@@ -61,7 +61,7 @@ function doGet(e) {
 
 function doPost(e) {
   const params = (e && e.parameter) || {};
-  if (!['admin-search', 'admin-summary'].includes(params.action)) {
+  if (!['admin-search', 'admin-summary', 'admin-payment-statuses'].includes(params.action)) {
     return jsonResponse_({ ok: false, error: 'bad_request' });
   }
 
@@ -80,6 +80,9 @@ function doPost(e) {
     }
     if (params.action === 'admin-summary') {
       return jsonResponse_(getTeacherSummary_());
+    }
+    if (params.action === 'admin-payment-statuses') {
+      return jsonResponse_(getPaymentStatuses_());
     }
     return jsonResponse_(searchTeachers_(params, true));
   } catch (error) {
@@ -308,6 +311,33 @@ function getTeacherSummary_() {
     ok: true,
     teacherCount: teachers.length,
     kabKotaCount: regions.size
+  };
+}
+
+function getPaymentStatuses_() {
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SEARCH_SHEET_NAME);
+  if (!sheet) throw new Error('Teacher search sheet not found.');
+
+  const lastColumn = sheet.getLastColumn();
+  if (lastColumn < 1) throw new Error('Status Pembayaran column not found.');
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getDisplayValues()[0];
+  const statusColumn = headers.findIndex(header =>
+    normalizeText_(header) === normalizeText_('Status Pembayaran')
+  ) + 1;
+  if (statusColumn === 0) throw new Error('Status Pembayaran column not found.');
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < SEARCH_FIRST_ROW) return { ok: true, statuses: [] };
+
+  const rowCount = lastRow - SEARCH_FIRST_ROW + 1;
+  const names = sheet.getRange(SEARCH_FIRST_ROW, 1, rowCount, 1).getDisplayValues();
+  const statuses = sheet.getRange(SEARCH_FIRST_ROW, statusColumn, rowCount, 1).getDisplayValues();
+  return {
+    ok: true,
+    statuses: names.map((row, index) => ({
+      name: String(row[0] || '').trim(),
+      status: String(statuses[index][0] || '').trim()
+    })).filter(row => row.name)
   };
 }
 

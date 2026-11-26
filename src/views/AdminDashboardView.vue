@@ -176,7 +176,10 @@
     const errorMessage = ref('');
     const processMessage = ref('');
     const query = ref('');
-    const statusFilter = ref('');
+    const regionFilter = ref('');
+    const collectionFilter = ref('');
+    const verificationFilter = ref('');
+    const paymentFilter = ref('');
     const pdfQuery = ref('');
     const page = ref(1);
     const pdfPage = ref(1);
@@ -249,31 +252,39 @@
         review: 0,
         ready: 0
     }));
+    const kabKotaOptions = computed(() => [...new Map(
+        allData.value
+            .map(row => String(row.kabkota || '').trim())
+            .filter(Boolean)
+            .map(value => [normalizeText(value), value])
+    ).values()].sort((a, b) => a.localeCompare(b, 'id', { sensitivity: 'base' })));
+    const paymentStatusOptions = computed(() => [...new Map(
+        allData.value
+            .map(row => String(row.statusPembayaran || '').trim())
+            .filter(Boolean)
+            .map(value => [normalizeText(value), value])
+    ).values()].sort((a, b) => a.localeCompare(b, 'id', { sensitivity: 'base' })));
+    const hasMissingPaymentStatus = computed(() => allData.value.some(row => !String(row.statusPembayaran || '').trim()));
     const filteredData = computed(() => {
         const keyword = query.value.trim().toLocaleLowerCase('id');
         const data = allData.value.filter(row => {
             const matchesText = !keyword || [row.nama, row.kabkota, row.satminkal]
                 .some(value => String(value || '').toLocaleLowerCase('id').includes(keyword));
-            if (!matchesText) return false;
             const state = stateOf(row);
-            switch (statusFilter.value) {
-                case 'sudah':
-                    return state.submitted;
-                case 'belum':
-                    return !state.submitted;
-                case 'lengkap':
-                    return state.submitted && state.complete;
-                case 'perbaikan':
-                    return state.correction;
-                case 'catatan':
-                    return state.specialNote;
-                case 'belum_dicek':
-                    return state.submitted && state.pendingReview;
-                case 'siap_cetak':
-                    return state.submitted && state.complete && !state.printed;
-                default:
-                    return true;
-            }
+            const matchesRegion = !regionFilter.value ||
+                normalizeText(row.kabkota) === normalizeText(regionFilter.value);
+            const matchesCollection = !collectionFilter.value ||
+                state.submitted === (collectionFilter.value === 'sudah');
+            const matchesVerification = !verificationFilter.value ||
+                (verificationFilter.value === 'lengkap' && state.complete) ||
+                (verificationFilter.value === 'belum_dicek' && state.pendingReview) ||
+                (verificationFilter.value === 'perbaikan' && (state.correction || state.specialNote));
+            const paymentStatus = String(row.statusPembayaran || '').trim();
+            const matchesPayment = !paymentFilter.value ||
+                (paymentFilter.value === '__empty__'
+                    ? !paymentStatus
+                    : normalizeText(paymentStatus) === normalizeText(paymentFilter.value));
+            return matchesText && matchesRegion && matchesCollection && matchesVerification && matchesPayment;
         });
         return data.toSorted ? data.toSorted(compareRows) : [...data].sort(compareRows);
     });
@@ -303,11 +314,25 @@
         if (showSpinner) loading.value = true;
         errorMessage.value = '';
         try {
-            const [rows, pdfs] = await Promise.all([
+            const [rows, pdfs, paymentData] = await Promise.all([
                 portalApi.adminCall('ambilDataAntreanAdmin', []),
-                portalApi.adminCall('ambilDaftarPDF', [])
+                portalApi.adminCall('ambilDaftarPDF', []),
+                portalApi.getAdminPaymentStatuses()
             ]);
-            if (!Array.isArray(rows) || !Array.isArray(pdfs)) throw new Error('api_invalid_response');
+            if (!Array.isArray(rows) || !Array.isArray(pdfs) || !Array.isArray(paymentData?.statuses) ||
+                !paymentData.statuses.every(item => typeof item?.name === 'string' && typeof item?.status === 'string')) {
+                throw new Error('api_invalid_response');
+            }
+            const paymentStatusByName = new Map();
+            paymentData.statuses.forEach(item => {
+                const name = normalizeText(item.name);
+                if (name && (!paymentStatusByName.has(name) || item.status)) {
+                    paymentStatusByName.set(name, item.status);
+                }
+            });
+            rows.forEach(row => {
+                row.statusPembayaran = paymentStatusByName.get(normalizeText(row.nama)) || '';
+            });
             allData.value = rows;
             pdfList.value = pdfs;
             canLoad.value = true;
@@ -348,6 +373,10 @@
         if (status.includes('belum')) return 'badge bg-danger-subtle text-danger-emphasis border border-danger-subtle';
         if (status.includes('sudah') || status.includes('lengkap')) return 'badge bg-success-subtle text-success-emphasis border border-success-subtle';
         return 'badge bg-light text-secondary border';
+    }
+    function reviewStatusLabel(row) {
+        const status = String(row.perbaikan || '').trim();
+        return !status || status.toLowerCase() === 'belum dicek' ? 'Belum diverifikasi' : status;
     }
     function reviewBadge(row) {
         const state = stateOf(row);
@@ -546,9 +575,9 @@
         return `"${text.replace(/"/g, '""')}"`;
     }
     function exportCsv() {
-        const headers = ['No', 'Nama Guru', 'Kab/Kota', 'Satminkal / Sekolah', 'Keterangan', 'Status Verval', 'Status Cetak'];
+        const headers = ['No', 'Nama Guru', 'Kab/Kota', 'Satminkal / Sekolah', 'Keterangan', 'Status Verval', 'Status Cetak', 'Status Pembayaran'];
         const rows = filteredData.value.map(row => [
-            row.no, row.nama, row.kabkota, row.satminkal, row.keterangan, row.perbaikan, row.statusPrint
+            row.no, row.nama, row.kabkota, row.satminkal, row.keterangan, reviewStatusLabel(row), row.statusPrint, row.statusPembayaran
         ]);
         const csv = `\uFEFF${[headers, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n')}`;
         const blob = new Blob([csv], {
@@ -561,7 +590,7 @@
         link.click();
         URL.revokeObjectURL(url);
     }
-    watch([query, statusFilter], () => {
+    watch([query, regionFilter, collectionFilter, verificationFilter, paymentFilter], () => {
         page.value = 1;
     });
     watch(pdfQuery, () => {
@@ -632,12 +661,26 @@
                 </div>
                 <div class="filter-controls mb-3">
                     <input v-model="query" class="form-control" type="search" placeholder="Cari nama, daerah, atau sekolah..." aria-label="Cari antrean">
-                    <select v-model="statusFilter" class="form-select" aria-label="Filter status antrean">
-              <option value="">Semua status</option><option value="sudah">Sudah mengumpulkan</option>
-              <option value="belum">Belum mengumpulkan</option><option value="lengkap">Lengkap</option>
-              <option value="perbaikan">Perlu perbaikan</option><option value="catatan">Catatan khusus</option>
-              <option value="belum_dicek">Belum diverifikasi</option><option value="siap_cetak">Siap cetak PDF</option>
-            </select>
+                    <select v-model="regionFilter" class="form-select" aria-label="Filter Kab/Kota">
+                        <option value="">Semua Kab/Kota</option>
+                        <option v-for="kabKota in kabKotaOptions" :key="kabKota" :value="kabKota">{{ kabKota }}</option>
+                    </select>
+                    <select v-model="collectionFilter" class="form-select" aria-label="Filter keterangan pengumpulan">
+                        <option value="">Semua keterangan</option>
+                        <option value="sudah">Sudah mengumpulkan</option>
+                        <option value="belum">Belum mengumpulkan</option>
+                    </select>
+                    <select v-model="verificationFilter" class="form-select" aria-label="Filter status verval">
+                        <option value="">Semua status verval</option>
+                        <option value="lengkap">Lengkap</option>
+                        <option value="belum_dicek">Belum diverifikasi</option>
+                        <option value="perbaikan">Perbaikan</option>
+                    </select>
+                    <select v-model="paymentFilter" class="form-select" aria-label="Filter status pembayaran">
+                        <option value="">Semua status pembayaran</option>
+                        <option v-for="status in paymentStatusOptions" :key="status" :value="status">{{ status }}</option>
+                        <option v-if="hasMissingPaymentStatus" value="__empty__">Belum diisi</option>
+                    </select>
                 </div>
                 <div v-if="loading" class="py-8 text-center text-sm text-gray-600"><span class="spinner-border spinner-border-sm me-2" role="status"></span>Memuat data admin...</div>
                 <div v-else class="space-y-3 md:hidden">
@@ -656,10 +699,13 @@
                             <div class="flex gap-2"><dt class="w-20 shrink-0 text-gray-500">Cetak</dt>
                                 <dd class="mb-0 text-gray-800">{{ row.statusPrint || '—' }}</dd>
                             </div>
+                            <div class="flex gap-2"><dt class="w-32 shrink-0 text-gray-500">Pembayaran</dt>
+                                <dd class="mb-0 text-gray-800">{{ row.statusPembayaran || '—' }}</dd>
+                            </div>
                         </dl>
                         <div class="mb-3 flex flex-wrap gap-2">
                             <span :class="statusBadge(row.keterangan)">{{ row.keterangan || 'Belum Mengumpulkan' }}</span>
-                            <span :class="[reviewBadge(row), 'text-start']">{{ row.perbaikan || 'Belum dicek' }}</span>
+                            <span :class="[reviewBadge(row), 'text-start']">{{ reviewStatusLabel(row) }}</span>
                         </div>
                         <button class="btn btn-sm btn-outline-primary w-100" :disabled="!Number(row.barisAsli)" @click="editRow(row)">Verval</button>
                     </article>
@@ -676,6 +722,7 @@
                                 <th>Keterangan</th>
                                 <th>Verval</th>
                                 <th>Cetak</th>
+                                <th>Status Pembayaran</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -686,12 +733,13 @@
                                 <td>{{ row.kabkota }}</td>
                                 <td class="min-w-48">{{ row.satminkal }}</td>
                                 <td><span :class="statusBadge(row.keterangan)">{{ row.keterangan || 'Belum Mengumpulkan' }}</span></td>
-                                <td><span :class="[reviewBadge(row), 'text-start']">{{ row.perbaikan || 'Belum dicek' }}</span></td>
+                                <td><span :class="[reviewBadge(row), 'text-start']">{{ reviewStatusLabel(row) }}</span></td>
                                 <td>{{ row.statusPrint || '—' }}</td>
+                                <td>{{ row.statusPembayaran || '—' }}</td>
                                 <td><button class="btn btn-sm btn-outline-primary text-nowrap" :disabled="!Number(row.barisAsli)" @click="editRow(row)">Verval</button></td>
                             </tr>
                             <tr v-if="!pageData.length">
-                                <td colspan="8" class="py-5 text-center text-sm text-gray-500">Tidak ada data yang sesuai filter.</td>
+                                <td colspan="9" class="py-5 text-center text-sm text-gray-500">Tidak ada data yang sesuai filter.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -906,7 +954,17 @@
     }
     @media (min-width: 640px) {
         .filter-controls {
-            grid-template-columns: minmax(0, 1fr) 14rem;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (min-width: 1024px) {
+        .filter-controls {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+    @media (min-width: 1280px) {
+        .filter-controls {
+            grid-template-columns: minmax(0, 1.25fr) repeat(4, minmax(0, 1fr));
         }
     }
     .sort-button span {

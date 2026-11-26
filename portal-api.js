@@ -458,6 +458,23 @@
         });
     }
 
+    async function getAdminPaymentStatuses() {
+        if (!adminCredential) throw new Error('invalid_admin_token');
+        try {
+            return await request('teacherSearch', {
+                action: 'admin-payment-statuses',
+                credential: adminCredential
+            }, 'POST');
+        } catch (error) {
+            if (error.message === 'forbidden') {
+                adminCredential = undefined;
+                clearAdminSession();
+                void openAuthGate();
+            }
+            throw error;
+        }
+    }
+
     async function renderGoogleButton(container, credentialHandler) {
         if (!(container instanceof HTMLElement) || typeof credentialHandler !== 'function') {
             throw new Error('bad_request');
@@ -498,6 +515,7 @@
         disposeAdmin,
         publicCall,
         adminCall,
+        getAdminPaymentStatuses,
         showApiError
     });
 })();
