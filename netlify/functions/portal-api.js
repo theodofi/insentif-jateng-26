@@ -31,7 +31,7 @@ function jsonResponse(statusCode, payload) {
     };
 }
 
-exports.handler = async function (event) {
+export async function handler(event) {
     if (!['GET', 'POST'].includes(event.httpMethod)) {
         return jsonResponse(405, { ok: false, error: 'method_not_allowed' });
     }
