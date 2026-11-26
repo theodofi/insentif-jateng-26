@@ -1,5 +1,11 @@
 (() => {
     const monitorMethods = new Set(['ambilDataSheetPengumpulanIndex2']);
+    const monitorWorkflows = new Set([
+        'ajuanJanJun',
+        'ajuanJulDes',
+        'berjalanJanJun',
+        'berjalanJulDes'
+    ]);
     const adminMethods = new Set([
         'ambilDataAntreanAdmin',
         'ambilDaftarPDF',
@@ -423,14 +429,16 @@
         const pageSize = Number(options.pageSize === undefined ? 12 : options.pageSize);
         const query = String(options.q || '');
         const status = String(options.status || '');
+        const workflow = options.workflow || document.body.dataset.portalWorkflow;
         if (
             !Number.isInteger(page) || page < 1 ||
             !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 50 ||
             query.length > 100 ||
-            !['', 'sudah', 'belum', 'perbaikan', 'catatan'].includes(status)) {
+            !['', 'sudah', 'belum', 'perbaikan', 'catatan'].includes(status) ||
+            !monitorWorkflows.has(workflow)) {
             throw new Error('bad_request');
         }
-        const result = await request(document.body.dataset.portalWorkflow, {
+        const result = await request(workflow, {
             action: 'monitor',
             page,
             pageSize,
@@ -440,10 +448,10 @@
         return result.data;
     }
 
-    async function adminCall(functionName, args) {
+    async function adminCall(functionName, args, workflow = activeWorkflow) {
         if (!adminCredential) throw new Error('invalid_admin_token');
-        if (!adminMethods.has(functionName)) throw new Error('bad_request');
-        return request(activeWorkflow, {
+        if (!adminMethods.has(functionName) || !monitorWorkflows.has(workflow)) throw new Error('bad_request');
+        return request(workflow, {
             action: 'admin',
             method: functionName,
             args: JSON.stringify(args),

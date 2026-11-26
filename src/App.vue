@@ -19,23 +19,13 @@
       icon: 'fa-solid fa-home'
     },
     {
-      to: '/admin/ajuan-janjun.html',
-      label: 'Panel Ajuan Januari-Juni',
+      to: '/admin/ajuan.html',
+      label: 'Panel Admin Ajuan',
       icon: 'fa-solid fa-file-circle-check'
     },
     {
-      to: '/admin/ajuan-juldes.html',
-      label: 'Panel Ajuan Juli-Desember',
-      icon: 'fa-solid fa-file-circle-check'
-    },
-    {
-      to: '/admin/berjalan-janjun.html',
-      label: 'Panel Bulan Berjalan Januari-Juni',
-      icon: 'fa-solid fa-calendar-check'
-    },
-    {
-      to: '/admin/berjalan-juldes.html',
-      label: 'Panel Bulan Berjalan Juli-Desember',
+      to: '/admin/berjalan.html',
+      label: 'Panel Admin Bulan Berjalan',
       icon: 'fa-solid fa-calendar-check'
     }
   ];

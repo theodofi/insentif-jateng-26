@@ -50,7 +50,7 @@ Install the frontend dependencies with `npm ci`, use `npm run dev` for the Vue d
 For local testing through the Netlify function proxy, run the project with Netlify CLI (`netlify dev`) instead of calling Apps Script directly. A plain `npm run dev` serves the SPA but does not run Netlify Functions. Add `http://localhost:8888` to the Google OAuth authorized JavaScript origins if testing sign-in locally.
 The proxy stops waiting for an Apps Script response after 25 seconds and returns an `upstream_timeout` error; if this repeats, check the corresponding Apps Script project's **Executions** and verify its external-request authorization.
 
-The public views remain available at `/pantau/ajuan-janjun.html`, `/pantau/ajuan-juldes.html`, `/pantau/berjalan-janjun.html`, and `/pantau/berjalan-juldes.html`. Admin panels remain at `/admin/ajuan-janjun.html`, `/admin/ajuan-juldes.html`, `/admin/berjalan-janjun.html`, and `/admin/berjalan-juldes.html`.
+The combined Ajuan views are available at `/pantau/ajuan.html` and `/admin/ajuan.html`; combined Bulan Berjalan views are available at `/pantau/berjalan.html` and `/admin/berjalan.html`. Each teacher is shown with separate rows for Januari-Juni and Juli-Desember, and the period overview cards are stacked vertically. Previous semester-specific routes redirect to the corresponding combined dashboard.
 
 The home-page Google sign-in checks the ID token against the Bulan Berjalan Januari-Juni Apps Script project before showing the Google profile and panel links. Each admin panel, including Ajuan Januari-Juni and Ajuan Juli-Desember, independently revalidates that token against its own Apps Script allowlist before loading or changing data.
 

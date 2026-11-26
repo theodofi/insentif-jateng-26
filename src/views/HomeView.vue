@@ -44,58 +44,19 @@
     ['KOTA SURAKARTA', 'Kota Surakarta'],
     ['KOTA TEGAL', 'Kota Tegal']
   ];
-  const teacherPeriods = [{
-      label: 'PERIODE 1',
-      title: 'Januari - Juni 2026',
-      cards: [{
-          title: 'Berkas Ajuan',
-          description: 'Berkas Ajuan Januari-Juni',
-          icon: 'fa-file-arrow-up',
-          color: 'blue',
-          uploadUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdxJNOyeah3yMU0wXV9Hhb5X5KGJkQ4uNqMJfxSt5zn7Q4QHQ/viewform',
-          uploadToast: 'Membuka Form Upload Ajuan Sem 1...',
-          monitorUrl: '/pantau/ajuan-janjun.html',
-          monitorToast: 'Membuka Pantauan Ajuan Sem 1...'
-        },
-        {
-          title: 'Bulan Berjalan',
-          description: 'Berkas Bulan Berjalan Januari-Juni',
-          icon: 'fa-calendar-check',
-          color: 'green',
-          uploadUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSfXcEB1EOV1b8n8w8H-tpRYZjsBjGT48hycdQP3Lu5CPwb-5A/viewform',
-          uploadToast: 'Membuka Form Upload Berjalan Sem 1...',
-          monitorUrl: '/pantau/berjalan-janjun.html',
-          monitorToast: 'Membuka Pantauan Berjalan Sem 1...'
-        }
-      ]
+  const teacherMonitorLinks = [{
+      label: 'Pantau Ajuan',
+      description: 'Pantau status berkas Ajuan Januari-Juni dan Juli-Desember 2026.',
+      icon: 'fa-file-circle-check',
+      url: '/pantau/ajuan.html',
+      toast: 'Membuka Pantauan Ajuan...'
     },
     {
-      label: 'PERIODE 2',
-      title: 'Juli - Desember 2026',
-      subdued: true,
-      cards: [{
-          title: 'Berkas Ajuan',
-          description: 'Berkas Ajuan Juli-Desember',
-          icon: 'fa-file-arrow-up',
-          color: 'blue',
-          subdued: true,
-          uploadUrl: 'https://docs.google.com/forms/d/e/1FAIpQLScGJ-o1e89Y-haRRrSWIxBT4rXvQvbXXDw0kMwJBYASBIUCJQ/viewform?usp=publish-editor',
-          uploadToast: 'Membuka Form Upload Ajuan Sem 2...',
-          monitorUrl: '/pantau/ajuan-juldes.html',
-          monitorToast: 'Membuka Pantauan Ajuan Sem 2...'
-        },
-        {
-          title: 'Bulan Berjalan',
-          description: 'Berkas Bulan Berjalan Juli-Desember 2026',
-          icon: 'fa-calendar-check',
-          color: 'green',
-          subdued: true,
-          uploadUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSe6m3kVWFc-Ue8bGXwg4E4hfk8EUSMhluyBd6XcFu7KS31dRQ/viewform?usp=publish-editor',
-          uploadToast: 'Membuka Form Upload Berjalan Sem 2...',
-          monitorUrl: '/pantau/berjalan-juldes.html',
-          monitorToast: 'Membuka Pantauan Berjalan Sem 2...'
-        }
-      ]
+      label: 'Pantau Bulan Berjalan',
+      description: 'Pantau status berkas Bulan Berjalan Januari-Juni dan Juli-Desember 2026.',
+      icon: 'fa-calendar-check',
+      url: '/pantau/berjalan.html',
+      toast: 'Membuka Pantauan Bulan Berjalan...'
     }
   ];
   const spkkCards = [{
@@ -609,36 +570,26 @@
         </div>
         <h2 class="mb-0 text-2xl font-bold text-gray-800">Layanan Pemberkasan Guru 2026</h2>
         <p class="mb-0 text-sm text-gray-500 mt-2 max-w-2xl mx-auto">
-          Pilih periode semester yang sesuai. Pastikan Anda mengunggah pada kategori yang tepat (Berkas Ajuan Awal atau Laporan Bulan Berjalan).
+          Pilih pantauan untuk melihat status dan mengunggah berkas pada periode yang sesuai.
         </p>
       </div>
-      <div v-for="period in teacherPeriods" :key="period.label" class="home-service-period">
-        <div class="home-service-period-heading flex items-center gap-3 mb-5 border-b border-gray-100 pb-3">
-          <span class="text-white text-xs font-bold px-3 py-1.5 rounded-md tracking-wide shadow-sm" :class="period.subdued ? 'bg-gray-600' : 'bg-blue-600'">{{ period.label }}</span>
-          <h3 class="mb-0 text-lg font-bold text-gray-700">{{ period.title }}</h3>
-        </div>
-        <div class="home-service-grid grid grid-cols-1 md:grid-cols-2 gap-5" :class="period.subdued && 'opacity-90 hover:opacity-100 transition-opacity'">
-          <article v-for="card in period.cards" :key="card.title" class="home-service-card bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
-            <div class="absolute top-0 left-0 w-1.5 h-full transition-colors" :class="card.color === 'green' ? (card.subdued ? 'bg-green-400 group-hover:bg-green-500' : 'bg-green-500 group-hover:bg-green-600') : (card.subdued ? 'bg-blue-400 group-hover:bg-blue-500' : 'bg-blue-500 group-hover:bg-blue-600')"></div>
-            <div class="home-service-card-heading flex items-start gap-4 mb-5 pl-2">
-              <div class="p-2.5 rounded-lg" :class="card.subdued ? 'bg-gray-50' : card.color === 'green' ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'">
-                <i class="fa-solid text-xl" :class="[card.icon, card.subdued && (card.color === 'green' ? 'text-green-500' : 'text-blue-500')]"></i>
-              </div>
-              <div>
-                <h4 class="mb-0 font-bold text-gray-800 text-lg">{{ card.title }}</h4>
-                <p class="mb-0 text-xs text-gray-500 mt-0.5">{{ card.description }}</p>
-              </div>
-            </div>
-            <div class="flex gap-3 pl-2">
-              <a :href="card.uploadUrl" target="_blank" rel="noopener noreferrer" class="text-xs py-2 flex-1" :class="card.color === 'green' ? 'btn-secondary' : 'btn-primary'" @click="showToast(card.uploadToast)">
-                <i class="fa-solid fa-upload mr-1.5"></i>Unggah
-              </a>
-              <RouterLink :to="card.monitorUrl" class="btn-outline home-monitor-button border-blue-200 text-blue-700 hover:bg-blue-50 text-xs py-2 flex-1 flex items-center justify-center" @click="showToast(card.monitorToast)">
-                <i class="fa-solid fa-magnifying-glass mr-1.5"></i>Pantau
-              </RouterLink>
-            </div>
-          </article>
-        </div>
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <RouterLink
+          v-for="link in teacherMonitorLinks"
+          :key="link.url"
+          :to="link.url"
+          class="home-monitor-button flex items-center justify-between gap-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-blue-800 transition-colors hover:bg-blue-100"
+          @click="showToast(link.toast)"
+        >
+          <span class="flex items-center gap-3">
+            <i class="fa-solid text-xl" :class="link.icon" aria-hidden="true"></i>
+            <span>
+              <span class="block font-bold">{{ link.label }}</span>
+              <span class="block text-xs text-blue-700">{{ link.description }}</span>
+            </span>
+          </span>
+          <i class="fa-solid fa-arrow-right shrink-0" aria-hidden="true"></i>
+        </RouterLink>
       </div>
     </section>
     <section class="home-berkas-section card-modern bg-white p-6 md:p-8 rounded-xl border border-gray-200 fade-in-up delay-2 mb-8">
@@ -704,12 +655,6 @@
   }
   .home-page .home-search-section {
     padding-bottom: 2.75rem !important;
-  }
-  .home-service-period+.home-service-period {
-    margin-top: 2.5rem;
-  }
-  .home-service-period-heading {
-    margin-bottom: 1.25rem !important;
   }
   .home-monitor-button {
     text-decoration: none;

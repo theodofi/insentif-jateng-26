@@ -20,10 +20,24 @@
         period: {
             type: String,
             required: true
+        },
+        combined: {
+            type: Boolean,
+            default: false
         }
     });
     const isBerjalan = computed(() => props.workflow.startsWith('berjalan'));
-    const months = computed(() => props.period === 'Januari-Juni' ?
+    const dataWorkflows = computed(() => props.combined ? [{
+        workflow: `${props.workflow.startsWith('berjalan') ? 'berjalan' : 'ajuan'}JanJun`,
+        period: 'Januari-Juni'
+    }, {
+        workflow: `${props.workflow.startsWith('berjalan') ? 'berjalan' : 'ajuan'}JulDes`,
+        period: 'Juli-Desember'
+    }] : [{
+        workflow: props.workflow,
+        period: props.period
+    }]);
+    const months = computed(() => (editing.value?.periode || props.period) === 'Januari-Juni' ?
         ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni'] :
         ['Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']);
     const ajuanDocuments = [{
@@ -163,9 +177,6 @@
             label: 'Print Out Simpatika / Emis'
         }
     ];
-    const checklistDocuments = computed(() => props.workflow === 'ajuanJulDes' ?
-        ajuanJulDesDocuments :
-        ajuanDocuments);
     const normalizeText = value => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
     const allData = ref([]);
     const pdfList = ref([]);
@@ -187,8 +198,14 @@
     const sortKey = ref('no');
     const sortAscending = ref(true);
     const editing = ref(null);
+    const availableWorkflows = ref([]);
     const editStatus = ref('');
     const statusInput = ref(null);
+    const checklistDocuments = computed(() =>
+        (editing.value?.workflow || props.workflow) === 'ajuanJulDes' ?
+            ajuanJulDesDocuments :
+            ajuanDocuments
+    );
     const activeTab = ref('skam');
     const previewTabs = [{
             key: 'skam',
@@ -237,21 +254,55 @@
             printed
         };
     }
-    const summary = computed(() => allData.value.reduce((result, row) => {
-        const state = stateOf(row);
-        if (state.submitted) result.submitted++;
-        else result.pending++;
-        if (state.correction || state.specialNote) result.correction++;
-        if (state.submitted && state.pendingReview) result.review++;
-        if (state.submitted && state.complete && !state.printed) result.ready++;
-        return result;
+    function summarizeRows(rows) {
+        return rows.reduce((result, row) => {
+            const state = stateOf(row);
+            if (state.submitted) result.submitted++;
+            else result.pending++;
+            if (state.correction || state.specialNote) result.correction++;
+            if (state.submitted && state.pendingReview) result.review++;
+            if (state.submitted && state.complete && !state.printed) result.ready++;
+            return result;
+        }, {
+            submitted: 0,
+            pending: 0,
+            correction: 0,
+            review: 0,
+            ready: 0
+        });
+    }
+    const summary = computed(() => summarizeRows(allData.value));
+    const summaryByPeriod = computed(() => dataWorkflows.value.map(source => ({
+        ...source,
+        available: availableWorkflows.value.includes(source.workflow),
+        summary: summarizeRows(allData.value.filter(row => row.workflow === source.workflow))
+    })));
+    const summaryCards = [{
+        key: 'submitted',
+        label: 'Sudah mengumpulkan',
+        cardClass: 'border-green-200 bg-green-50',
+        textClass: 'text-green-800'
     }, {
-        submitted: 0,
-        pending: 0,
-        correction: 0,
-        review: 0,
-        ready: 0
-    }));
+        key: 'pending',
+        label: 'Belum mengumpulkan',
+        cardClass: 'border-red-200 bg-red-50',
+        textClass: 'text-red-800'
+    }, {
+        key: 'correction',
+        label: 'Perbaikan / catatan',
+        cardClass: 'border-yellow-200 bg-yellow-50',
+        textClass: 'text-yellow-900'
+    }, {
+        key: 'review',
+        label: 'Belum diverifikasi',
+        cardClass: 'border-blue-200 bg-blue-50',
+        textClass: 'text-blue-800'
+    }, {
+        key: 'ready',
+        label: 'Siap cetak PDF',
+        cardClass: 'border-purple-200 bg-purple-50',
+        textClass: 'text-purple-800'
+    }];
     const kabKotaOptions = computed(() => [...new Map(
         allData.value
             .map(row => String(row.kabkota || '').trim())
@@ -299,8 +350,26 @@
             });
         return sortAscending.value ? compared : -compared;
     }
-    const pageCount = computed(() => Math.max(1, Math.ceil(filteredData.value.length / pageSize)));
-    const pageData = computed(() => filteredData.value.slice((page.value - 1) * pageSize, page.value * pageSize));
+    const teacherGroups = computed(() => {
+        const groups = new Map();
+        filteredData.value.forEach(row => {
+            const key = normalizeText(row.nama) || `${row.workflow}:${row.barisAsli}`;
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key).push(row);
+        });
+        return [...groups.values()]
+            .map(rows => rows.sort((a, b) => a.workflow.localeCompare(b.workflow)))
+            .sort((a, b) => compareRows(a[0], b[0]));
+    });
+    const pageCount = computed(() => Math.max(1, Math.ceil(
+        (props.combined ? teacherGroups.value.length : filteredData.value.length) / pageSize
+    )));
+    const pageData = computed(() => props.combined ?
+        teacherGroups.value.slice((page.value - 1) * pageSize, page.value * pageSize).flat() :
+        filteredData.value.slice((page.value - 1) * pageSize, page.value * pageSize));
+    const pageTeacherGroups = computed(() => props.combined ?
+        teacherGroups.value.slice((page.value - 1) * pageSize, page.value * pageSize) :
+        pageData.value.map(row => [row]));
     const filteredPdfs = computed(() => {
         const keyword = pdfQuery.value.trim().toLocaleLowerCase('id');
         return pdfList.value.filter(item => !keyword || String(item.nama || '').toLocaleLowerCase('id').includes(keyword));
@@ -314,15 +383,28 @@
         if (showSpinner) loading.value = true;
         errorMessage.value = '';
         try {
-            const [rows, pdfs, paymentData] = await Promise.all([
-                portalApi.adminCall('ambilDataAntreanAdmin', []),
-                portalApi.adminCall('ambilDaftarPDF', []),
+            const [sources, paymentData] = await Promise.all([
+                Promise.all(dataWorkflows.value.map(async source => {
+                    try {
+                        const [rows, pdfs] = await Promise.all([
+                            portalApi.adminCall('ambilDataAntreanAdmin', [], source.workflow),
+                            portalApi.adminCall('ambilDaftarPDF', [], source.workflow)
+                        ]);
+                        if (!Array.isArray(rows) || !Array.isArray(pdfs)) throw new Error('api_invalid_response');
+                        return { ...source, rows, pdfs };
+                    } catch (error) {
+                        return { ...source, error };
+                    }
+                })),
                 portalApi.getAdminPaymentStatuses()
             ]);
-            if (!Array.isArray(rows) || !Array.isArray(pdfs) || !Array.isArray(paymentData?.statuses) ||
+            if (!Array.isArray(paymentData?.statuses) ||
                 !paymentData.statuses.every(item => typeof item?.name === 'string' && typeof item?.status === 'string')) {
                 throw new Error('api_invalid_response');
             }
+            const loadedSources = sources.filter(source => !source.error);
+            if (!loadedSources.length) throw sources[0]?.error || new Error('api_invalid_response');
+
             const paymentStatusByName = new Map();
             paymentData.statuses.forEach(item => {
                 const name = normalizeText(item.name);
@@ -330,16 +412,49 @@
                     paymentStatusByName.set(name, item.status);
                 }
             });
-            rows.forEach(row => {
-                row.statusPembayaran = paymentStatusByName.get(normalizeText(row.nama)) || '';
-            });
+
+            let rows = loadedSources.flatMap(source => source.rows.map(row => ({
+                ...row,
+                workflow: source.workflow,
+                periode: source.period,
+                statusPembayaran: paymentStatusByName.get(normalizeText(row.nama)) || ''
+            })));
+            if (props.combined) {
+                const teachers = new Map();
+                rows.forEach(row => {
+                    const key = normalizeText(row.nama) || `${row.workflow}:${row.barisAsli || row.no}`;
+                    if (!teachers.has(key)) teachers.set(key, []);
+                    teachers.get(key).push(row);
+                });
+                rows = [...teachers.values()].flatMap((teacherRows, index) =>
+                    teacherRows
+                        .sort((a, b) => a.workflow.localeCompare(b.workflow))
+                        .map(row => ({
+                            ...row,
+                            no: index + 1
+                        }))
+                );
+            }
+
+            availableWorkflows.value = loadedSources.map(source => source.workflow);
+            pdfList.value = loadedSources.flatMap(source => source.pdfs.map(pdf => ({
+                ...pdf,
+                workflow: source.workflow,
+                periode: source.period
+            })));
             allData.value = rows;
-            pdfList.value = pdfs;
+            const failedSources = sources.filter(source => source.error);
+            if (failedSources.length) {
+                errorMessage.value = failedSources.map(source =>
+                    `Data periode ${source.period} tidak dapat dimuat: ${errorText(source.error)}`
+                ).join(' ');
+            }
             canLoad.value = true;
             if (page.value > pageCount.value) page.value = pageCount.value;
         } catch (error) {
             errorMessage.value = errorText(error);
             canLoad.value = false;
+            availableWorkflows.value = [];
         } finally {
             loading.value = false;
         }
@@ -377,6 +492,11 @@
     function reviewStatusLabel(row) {
         const status = String(row.perbaikan || '').trim();
         return !status || status.toLowerCase() === 'belum dicek' ? 'Belum diverifikasi' : status;
+    }
+    function mergedFieldValue(rows, field) {
+        const values = rows.map(row => String(row[field] || '').trim() || '—');
+        if (new Set(values).size === 1) return values[0];
+        return rows.map((row, index) => `${row.periode}: ${values[index]}`).join(' / ');
     }
     function reviewBadge(row) {
         const state = stateOf(row);
@@ -502,13 +622,13 @@
                     checkedMonths.value.skam.join(', '),
                     checkedMonths.value.lapkin.join(', '),
                     checkedMonths.value.hadir.join(', ')
-                ]);
+                ], editing.value.workflow);
             } else {
                 response = await portalApi.adminCall('simpanStatusVerval', [
                     Number(editing.value.barisAsli),
                     editStatus.value.trim(),
                     checkedDocuments.value.join(', ')
-                ]);
+                ], editing.value.workflow);
             }
             if (response !== 'Berhasil') throw new Error(`Status tidak tersimpan: ${String(response || 'respons kosong dari server')}`);
             editing.value = null;
@@ -531,31 +651,52 @@
         stopRequested.value = false;
         processMessage.value = 'Memeriksa antrean...';
         try {
-            const init = await portalApi.adminCall('inisialisasiCetakBatch', []);
-            if (init?.error) throw new Error(String(init.error));
-            if (!Number.isInteger(init?.total) || !Array.isArray(init?.barisTarget)) throw new Error('api_invalid_response');
-            if (init.total !== init.barisTarget.length ||
-                !init.barisTarget.every(rowNumber => Number.isInteger(Number(rowNumber)) && Number(rowNumber) >= 2) ||
-                (init.total > 0 && (typeof init.subfolderId !== 'string' || !init.subfolderId))) {
-                throw new Error('api_invalid_response');
-            }
-            if (init.total === 0) {
+            const initializations = await Promise.all(availableWorkflows.value.map(async workflow => {
+                const init = await portalApi.adminCall('inisialisasiCetakBatch', [], workflow);
+                if (init?.error) throw new Error(String(init.error));
+                if (!Number.isInteger(init?.total) || !Array.isArray(init?.barisTarget) ||
+                    init.total !== init.barisTarget.length ||
+                    !init.barisTarget.every(rowNumber => Number.isInteger(Number(rowNumber)) && Number(rowNumber) >= 2) ||
+                    (init.total > 0 && (typeof init.subfolderId !== 'string' || !init.subfolderId))) {
+                    throw new Error('api_invalid_response');
+                }
+                return { workflow, init };
+            }));
+            const targets = initializations.flatMap(({ workflow, init }) =>
+                init.barisTarget.map(rowNumber => ({
+                    workflow,
+                    rowNumber: Number(rowNumber),
+                    subfolderId: init.subfolderId
+                }))
+            );
+            if (!targets.length) {
                 processMessage.value = 'Tidak ada data siap proses.';
                 return;
             }
             let success = 0;
             const failures = [];
-            for (const rowNumber of init.barisTarget) {
+            for (const target of targets) {
                 if (stopRequested.value) break;
-                processMessage.value = `Membuat PDF... ${success + failures.length}/${init.total} selesai.`;
-                const result = await portalApi.adminCall('prosesSatuBarisPDFWeb', [rowNumber, init.subfolderId]);
+                processMessage.value = `Membuat PDF... ${success + failures.length}/${targets.length} selesai.`;
+                const result = await portalApi.adminCall(
+                    'prosesSatuBarisPDFWeb',
+                    [target.rowNumber, target.subfolderId],
+                    target.workflow
+                );
                 if (result?.success && result.fileInfo) {
                     success++;
-                    pdfList.value.unshift(result.fileInfo);
-                    const matched = allData.value.find(row => Number(row.barisAsli) === Number(rowNumber));
+                    const source = dataWorkflows.value.find(item => item.workflow === target.workflow);
+                    pdfList.value.unshift({
+                        ...result.fileInfo,
+                        workflow: target.workflow,
+                        periode: source?.period || ''
+                    });
+                    const matched = allData.value.find(row =>
+                        row.workflow === target.workflow && Number(row.barisAsli) === target.rowNumber
+                    );
                     if (matched) matched.statusPrint = 'Sudah Print';
                 } else {
-                    failures.push(String(result?.message || `Baris ${rowNumber} gagal diproses.`));
+                    failures.push(String(result?.message || `Baris ${target.rowNumber} gagal diproses.`));
                 }
             }
             processMessage.value = stopRequested.value ?
@@ -575,9 +716,28 @@
         return `"${text.replace(/"/g, '""')}"`;
     }
     function exportCsv() {
-        const headers = ['No', 'Nama Guru', 'Kab/Kota', 'Satminkal / Sekolah', 'Keterangan', 'Status Verval', 'Status Cetak', 'Status Pembayaran'];
-        const rows = filteredData.value.map(row => [
-            row.no, row.nama, row.kabkota, row.satminkal, row.keterangan, reviewStatusLabel(row), row.statusPrint, row.statusPembayaran
+        const headers = [
+            'No',
+            ...(props.combined ? ['Periode'] : []),
+            'Nama Guru',
+            'Kab/Kota',
+            'Satminkal / Sekolah',
+            'Keterangan',
+            'Status Verval',
+            'Status Cetak',
+            'Status Pembayaran'
+        ];
+        const exportData = props.combined ? teacherGroups.value.flat() : filteredData.value;
+        const rows = exportData.map(row => [
+            row.no,
+            ...(props.combined ? [row.periode] : []),
+            row.nama,
+            row.kabkota,
+            row.satminkal,
+            row.keterangan,
+            reviewStatusLabel(row),
+            row.statusPrint,
+            row.statusPembayaran
         ]);
         const csv = `\uFEFF${[headers, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n')}`;
         const blob = new Blob([csv], {
@@ -586,7 +746,7 @@
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `${props.workflow}-rekap.csv`;
+        link.download = `${props.combined ? (props.workflow.startsWith('berjalan') ? 'berjalan' : 'ajuan') : props.workflow}-rekap.csv`;
         link.click();
         URL.revokeObjectURL(url);
     }
@@ -629,7 +789,18 @@
                 </RouterLink>
             </div>
             <div v-if="errorMessage" class="alert alert-danger mb-4" role="alert">{{ errorMessage }}</div>
-            <div class="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div v-if="combined" class="mb-5 flex flex-col gap-4">
+                <section v-for="period in summaryByPeriod" :key="period.workflow" class="rounded-xl border border-gray-200 bg-white p-4">
+                    <h3 class="mb-3 text-sm font-bold uppercase tracking-wide text-gray-700">{{ period.period }}</h3>
+                    <div class="grid grid-cols-2 gap-3 lg:grid-cols-3 2xl:grid-cols-5">
+                        <div v-for="card in summaryCards" :key="card.key" class="rounded-xl border p-3" :class="card.cardClass">
+                            <p class="mb-1 text-xs font-bold uppercase" :class="card.textClass">{{ card.label }}</p>
+                            <p class="mb-0 text-2xl font-bold" :class="card.textClass">{{ period.available ? period.summary[card.key] : '—' }}</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <div v-else class="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 <div class="rounded-xl border border-green-200 bg-green-50 p-3">
                     <p class="mb-1 text-xs font-bold uppercase text-green-800">Sudah mengumpulkan</p>
                     <p class="mb-0 text-2xl font-bold text-green-800">{{ summary.submitted }}</p>
@@ -683,8 +854,39 @@
                     </select>
                 </div>
                 <div v-if="loading" class="py-8 text-center text-sm text-gray-600"><span class="spinner-border spinner-border-sm me-2" role="status"></span>Memuat data admin...</div>
+                <div v-else-if="combined" class="space-y-3 md:hidden">
+                    <article v-for="teacherRows in pageTeacherGroups" :key="`card-${teacherRows[0].nama}`" class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                        <div class="mb-2 flex items-start justify-between gap-2">
+                            <h4 class="mb-0 text-base font-semibold text-gray-900">{{ teacherRows[0].nama }}</h4>
+                            <span class="text-xs text-gray-500">#{{ teacherRows[0].no }}</span>
+                        </div>
+                        <dl class="mb-3 space-y-1 text-sm">
+                            <div class="flex gap-2"><dt class="w-32 shrink-0 text-gray-500">Kab/Kota</dt>
+                                <dd class="mb-0 text-gray-800">{{ mergedFieldValue(teacherRows, 'kabkota') }}</dd>
+                            </div>
+                            <div class="flex gap-2"><dt class="w-32 shrink-0 text-gray-500">Satminkal</dt>
+                                <dd class="mb-0 text-gray-800">{{ mergedFieldValue(teacherRows, 'satminkal') }}</dd>
+                            </div>
+                            <div class="flex gap-2"><dt class="w-32 shrink-0 text-gray-500">Cetak</dt>
+                                <dd class="mb-0 text-gray-800">{{ mergedFieldValue(teacherRows, 'statusPrint') }}</dd>
+                            </div>
+                            <div class="flex gap-2"><dt class="w-32 shrink-0 text-gray-500">Pembayaran</dt>
+                                <dd class="mb-0 text-gray-800">{{ mergedFieldValue(teacherRows, 'statusPembayaran') }}</dd>
+                            </div>
+                        </dl>
+                        <div v-for="row in teacherRows" :key="`period-${row.workflow}-${row.barisAsli}`" class="border-t border-gray-100 py-3 last:pb-0">
+                            <p class="mb-2 text-sm font-semibold text-gray-700">{{ row.periode }}</p>
+                            <div class="mb-3 flex flex-wrap gap-2">
+                                <span :class="statusBadge(row.keterangan)">{{ row.keterangan || 'Belum Mengumpulkan' }}</span>
+                                <span :class="[reviewBadge(row), 'text-start']">{{ reviewStatusLabel(row) }}</span>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary w-100" :disabled="!Number(row.barisAsli)" @click="editRow(row)">Verval</button>
+                        </div>
+                    </article>
+                    <p v-if="!pageData.length" class="rounded-xl border border-gray-200 py-5 text-center text-sm text-gray-500">Tidak ada data yang sesuai filter.</p>
+                </div>
                 <div v-else class="space-y-3 md:hidden">
-                    <article v-for="row in pageData" :key="`card-${row.barisAsli}-${row.no}-${row.nama}`" class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <article v-for="row in pageData" :key="`card-${row.workflow}-${row.barisAsli}-${row.no}-${row.nama}`" class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                         <div class="mb-2 flex items-start justify-between gap-2">
                             <h4 class="mb-0 text-base font-semibold text-gray-900">{{ row.nama }}</h4>
                             <span class="text-xs text-gray-500">#{{ row.no }}</span>
@@ -719,27 +921,48 @@
                                 <th><button class="sort-button" @click="sortBy('nama')">Nama Guru <span>{{ sortKey === 'nama' ? (sortAscending ? '▲' : '▼') : '↕' }}</span></button></th>
                                 <th><button class="sort-button" @click="sortBy('kabkota')">Kab/Kota <span>{{ sortKey === 'kabkota' ? (sortAscending ? '▲' : '▼') : '↕' }}</span></button></th>
                                 <th>Satminkal / Sekolah</th>
-                                <th>Keterangan</th>
-                                <th>Verval</th>
                                 <th>Cetak</th>
                                 <th>Status Pembayaran</th>
+                                <th v-if="combined">Periode</th>
+                                <th>Keterangan</th>
+                                <th>Verval</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="row in pageData" :key="`${row.barisAsli}-${row.no}-${row.nama}`">
-                                <td>{{ row.no }}</td>
-                                <td class="min-w-48 fw-semibold">{{ row.nama }}</td>
-                                <td>{{ row.kabkota }}</td>
-                                <td class="min-w-48">{{ row.satminkal }}</td>
-                                <td><span :class="statusBadge(row.keterangan)">{{ row.keterangan || 'Belum Mengumpulkan' }}</span></td>
-                                <td><span :class="[reviewBadge(row), 'text-start']">{{ reviewStatusLabel(row) }}</span></td>
-                                <td>{{ row.statusPrint || '—' }}</td>
-                                <td>{{ row.statusPembayaran || '—' }}</td>
-                                <td><button class="btn btn-sm btn-outline-primary text-nowrap" :disabled="!Number(row.barisAsli)" @click="editRow(row)">Verval</button></td>
-                            </tr>
+                            <template v-if="combined">
+                                <template v-for="teacherRows in pageTeacherGroups" :key="`${teacherRows[0].workflow}-${teacherRows[0].nama}`">
+                                    <tr v-for="(row, rowIndex) in teacherRows" :key="`${row.workflow}-${row.barisAsli}-${row.nama}`">
+                                        <template v-if="rowIndex === 0">
+                                            <td :rowspan="teacherRows.length">{{ teacherRows[0].no }}</td>
+                                            <td :rowspan="teacherRows.length" class="min-w-48 fw-semibold">{{ teacherRows[0].nama }}</td>
+                                            <td :rowspan="teacherRows.length">{{ mergedFieldValue(teacherRows, 'kabkota') }}</td>
+                                            <td :rowspan="teacherRows.length" class="min-w-48">{{ mergedFieldValue(teacherRows, 'satminkal') }}</td>
+                                            <td :rowspan="teacherRows.length">{{ mergedFieldValue(teacherRows, 'statusPrint') }}</td>
+                                            <td :rowspan="teacherRows.length">{{ mergedFieldValue(teacherRows, 'statusPembayaran') }}</td>
+                                        </template>
+                                        <td>{{ row.periode }}</td>
+                                        <td><span :class="statusBadge(row.keterangan)">{{ row.keterangan || 'Belum Mengumpulkan' }}</span></td>
+                                        <td><span :class="[reviewBadge(row), 'text-start']">{{ reviewStatusLabel(row) }}</span></td>
+                                        <td><button class="btn btn-sm btn-outline-primary text-nowrap" :disabled="!Number(row.barisAsli)" @click="editRow(row)">Verval</button></td>
+                                    </tr>
+                                </template>
+                            </template>
+                            <template v-else>
+                                <tr v-for="row in pageData" :key="`${row.workflow}-${row.barisAsli}-${row.no}-${row.nama}`">
+                                    <td>{{ row.no }}</td>
+                                    <td class="min-w-48 fw-semibold">{{ row.nama }}</td>
+                                    <td>{{ row.kabkota }}</td>
+                                    <td class="min-w-48">{{ row.satminkal }}</td>
+                                    <td>{{ row.statusPrint || '—' }}</td>
+                                    <td>{{ row.statusPembayaran || '—' }}</td>
+                                    <td><span :class="statusBadge(row.keterangan)">{{ row.keterangan || 'Belum Mengumpulkan' }}</span></td>
+                                    <td><span :class="[reviewBadge(row), 'text-start']">{{ reviewStatusLabel(row) }}</span></td>
+                                    <td><button class="btn btn-sm btn-outline-primary text-nowrap" :disabled="!Number(row.barisAsli)" @click="editRow(row)">Verval</button></td>
+                                </tr>
+                            </template>
                             <tr v-if="!pageData.length">
-                                <td colspan="9" class="py-5 text-center text-sm text-gray-500">Tidak ada data yang sesuai filter.</td>
+                                <td :colspan="combined ? 10 : 9" class="py-5 text-center text-sm text-gray-500">Tidak ada data yang sesuai filter.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -775,7 +998,7 @@
                         </thead>
                         <tbody>
                             <tr v-for="(pdf, index) in pdfPageData" :key="`${pdf.url}-${index}`">
-                                <td class="fw-semibold">{{ pdf.nama }}</td>
+                                <td class="fw-semibold">{{ pdf.nama }}<span v-if="combined && pdf.periode" class="ms-2 text-xs text-gray-500">({{ pdf.periode }})</span></td>
                                 <td>{{ pdf.waktuFormat || '—' }}</td>
                                 <td><a v-if="safeDriveUrl(pdf.url)" class="btn btn-sm btn-outline-primary" :href="safeDriveUrl(pdf.url)" target="_blank" rel="noopener noreferrer">Buka PDF</a><span v-else class="text-sm text-gray-500">Tautan tidak tersedia</span></td>
                             </tr>
